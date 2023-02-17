@@ -1,0 +1,24 @@
+{
+    "profiles": [
+        { 
+            "name":"Debug", 
+            "conanFile":"${workspaceFolder}/conanfile.py",
+            "profile":"${workspaceFolder}/conan/profiles/gccLinuxDebug",
+            "installArg": "--build=missing",
+            "buildArg":"",
+            "createUser": "disroop",
+            "createChannel": "development",
+            "createArg": "--build=missing" 
+        },
+        { 
+            "name":"Release", 
+            "conanFile":"${workspaceFolder}/conanfile.py",
+            "profile":"${workspaceFolder}/conan/profiles/gccLinuxRelease",
+            "installArg": "--build=missing",
+            "buildArg":"",
+            "createUser": "disroop",
+            "createChannel": "development",
+            "createArg": "--build=missing" 
+        }
+    ]
+}
