@@ -1,11 +1,12 @@
 import os
 from conans import ConanFile, CMake
 class TradingSystems(ConanFile):
-    name = "Trade"
+    name = "TradingSystems"
     version = "1.0"
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
     default_options = {"shared": False}
+    generators = "cmake"
 
     def build(self):
         # build your shared library
