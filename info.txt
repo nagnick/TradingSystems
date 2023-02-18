@@ -5,4 +5,4 @@ Dependencies:
     cmake
     gcc
     git
-    
+    poco

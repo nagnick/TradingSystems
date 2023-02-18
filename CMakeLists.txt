@@ -24,6 +24,7 @@ set(Boost_DEBUG ON)
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 conan_cmake_configure(REQUIRES
 boost/1.77.0
+poco/1.12.4
 GENERATORS cmake)
 conan_cmake_run(CONANFILE build/conanfile.txt
                 BASIC_SETUP CMAKE_TARGETS
@@ -46,3 +47,4 @@ add_executable(main
 
 target_include_directories (main PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(main CONAN_PKG::boost)
+target_link_libraries(main CONAN_PKG::poco)
