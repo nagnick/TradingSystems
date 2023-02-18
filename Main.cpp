@@ -5,6 +5,7 @@ using namespace std;
 
 int main(){
     cout << "Hello World\n";
-    HTTPSClient client("http://pocoproject.org/images/front_banner.jpg",443);
+    HTTPSClient client("www.google.com",443);
+    client.sendRequest("{\"Hello\"}");
     return 0;
 }

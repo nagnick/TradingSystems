@@ -23,8 +23,37 @@ class HTTPSClient{ // pocoClientseccion wrapper
         std::string version = "1.1";
         Poco::Net::HTTPRequest request(version);
         request.setHost(url, port);
-        request.add("Authorization", "Bearer"); // add token to request??
+        request.setKeepAlive(true);
+        request.setContentLength(requestBody.size());
         request.setContentType("application/json");
+        //request.add("Authorization", "Bearer"); // add token to request??
+        request.setContentType("application/json");
+        std::ostream& o = session->sendRequest(request);
+        o << requestBody;
         session->sendRequest(request);
+        Poco::Net::HTTPResponse response;
+        std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
+        std::istream& s = session->receiveResponse(response);
+        char text[20] =  "ooooooooooooooooooo";
+        s.getline(text,20);
+        std::cout << text;
     };
 };
+// Poco::JSON::Object obj;
+//     obj.set("name", name);
+//     obj.set("url", repo);
+
+/*HTTPClientSession session(uri.getHost(), uri.getPort());
+HTTPRequest request(HTTPRequest::HTTP_POST, path, HTTPMessage::HTTP_1_1);
+HTTPResponse response;
+
+std::stringstream ss;
+obj.stringify(ss);
+request.setKeepAlive(true);
+request.setContentLength(ss.str().size());
+request.setContentType("application/json");  // definately set Content-Type right?
+
+std::ostream& o = session.sendRequest(request);
+obj.stringify(o);             // can confirm it is spitting out the valid 
+
+std::cout << response.getStatus() << " " << response.getReason() << std::endl;*/
