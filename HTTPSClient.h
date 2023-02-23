@@ -6,16 +6,29 @@
 #include "Poco/StreamCopier.h"
 #include "Poco/URI.h"
 #include "Poco/JSON/Object.h"
+#include "Poco/Base64Encoder.h"
 #include <string>
 class HTTPSClient{ // pocoClientseccion wrapper
     Poco::Net::HTTPSClientSession* session;
     std::string url;
     int port;
+    std::string authScheme, authInfo;
     public:
-    HTTPSClient(std::string _url, int _port){
+    HTTPSClient(std::string _url, int _port, std::string authScheme, std::string authInfo){
         url = _url;
         port = _port;
         session = new Poco::Net::HTTPSClientSession(url , port);
+        this->authScheme = authScheme;
+        if (authScheme.compare("Basic") == 0){
+            std::stringstream ss;
+            Poco::Base64Encoder b64enc(ss);
+            b64enc << authInfo;
+            this->authInfo = ss.str();
+            std::cout << authInfo << std::endl;
+        }
+        else{
+            this->authInfo = authInfo;
+        }
     };
     void setKeepAlive(bool alive){
         session->setKeepAlive(alive);
@@ -23,21 +36,21 @@ class HTTPSClient{ // pocoClientseccion wrapper
     bool connected(){
         return session->connected();
     }
-    void sendRequest(Poco::JSON::Object json){
+    void sendRequest(Poco::JSON::Object json, std::string method, std::string urlExtension){
         // send message
-        std::string version = "1.1";
-        Poco::Net::HTTPRequest request(version);
-        request.setHost(url, port);
+        std::string version = "1.1"; // don't use for alpaca
+        Poco::Net::HTTPRequest request(method, urlExtension);
+        //request.setHost(urlExtension, port);
         request.setKeepAlive(true);
         std::stringstream ss;
         json.stringify(ss);
-
-        request.setContentLength(ss.str().size());
+        request.setContentLength(0); //ss.str().size()
         request.setContentType("application/json");
+       //request.setCredentials(authScheme, authInfo);
         //request.add("Authorization", "Bearer"); // add token to request??
         //request.setContentType("application/json");
-        std::ostream& o = session->sendRequest(request);
-        json.stringify(o);  // write json to ostream of request
+        //std::ostream& o = session->sendRequest(request);
+        //json.stringify(o);  // write json to ostream of request
         session->sendRequest(request);
 
 
@@ -45,8 +58,8 @@ class HTTPSClient{ // pocoClientseccion wrapper
         Poco::Net::HTTPResponse response;
         std::istream& s = session->receiveResponse(response);
         std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
-        char text[20] =  "ooooooooooooooooooo";
-        s.getline(text,20);
+        char* text = new char[200];
+        s.getline(text,200);
         std::cout << text;
     };
 };

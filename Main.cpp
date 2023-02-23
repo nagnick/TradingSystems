@@ -3,16 +3,16 @@
 #include "HTTPSClient.h"
 #include "JSONFileParser.h"
 #include "TradingSystemsComponentFactory.h"
+#include "AlpacaBroker.h"
 using namespace std;
 
 int main(){
-    cout << "Hello World\n";
-    HTTPSClient client("www.google.com",443);
-    std::cout<< client.connected() << std::endl;
-    client.sendRequest(Poco::JSON::Object());
-    std::cout<< client.connected() << std::endl;
     JSONFileParser file("/mnt/c/Users/nicol/Desktop/TradingSystems/broker.cfg");
-    std::cout << file.getValue("tradier") << std::endl;
-    std::cout << file.getSubObjectValue("tradier","APIKey") << std::endl;
+    AlpacaBroker broker(file);
+    //HTTPSClient client(file.getSubObjectValue("alpaca","URL") ,443,file.getSubObjectValue("alpaca","AuthScheme"),file.getSubObjectValue("alpaca","AuthInfo"));
+    //std::cout<< client.connected() << std::endl;
+    //client.sendRequest(Poco::JSON::Object(),"GET","/v2/account");
+    //std::cout<< client.connected() << std::endl;
+    broker.sendRequest("GET","/v2/account",Poco::JSON::Object());
     return 0;
 }
