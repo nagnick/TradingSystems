@@ -5,6 +5,7 @@
 #include "Poco/Net/HTTPResponse.h"
 #include "Poco/StreamCopier.h"
 #include "Poco/URI.h"
+#include "Poco/JSON/Object.h"
 #include <string>
 class HTTPSClient{ // pocoClientseccion wrapper
     Poco::Net::HTTPSClientSession* session;
@@ -19,21 +20,31 @@ class HTTPSClient{ // pocoClientseccion wrapper
     void setKeepAlive(bool alive){
         session->setKeepAlive(alive);
     };
-    void sendRequest(std::string requestBody){
+    bool connected(){
+        return session->connected();
+    }
+    void sendRequest(Poco::JSON::Object json){
+        // send message
         std::string version = "1.1";
         Poco::Net::HTTPRequest request(version);
         request.setHost(url, port);
         request.setKeepAlive(true);
-        request.setContentLength(requestBody.size());
+        std::stringstream ss;
+        json.stringify(ss);
+
+        request.setContentLength(ss.str().size());
         request.setContentType("application/json");
         //request.add("Authorization", "Bearer"); // add token to request??
-        request.setContentType("application/json");
+        //request.setContentType("application/json");
         std::ostream& o = session->sendRequest(request);
-        o << requestBody;
+        json.stringify(o);  // write json to ostream of request
         session->sendRequest(request);
+
+
+        // get response
         Poco::Net::HTTPResponse response;
-        std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
         std::istream& s = session->receiveResponse(response);
+        std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
         char text[20] =  "ooooooooooooooooooo";
         s.getline(text,20);
         std::cout << text;
