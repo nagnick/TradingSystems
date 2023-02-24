@@ -47,5 +47,5 @@ add_executable(main
 
 target_include_directories (main PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(main 
-CONAN_PKG::boost
-CONAN_PKG::poco )
+  CONAN_PKG::boost
+  CONAN_PKG::poco )

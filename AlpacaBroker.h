@@ -12,7 +12,6 @@ class AlpacaBroker: public IBroker{
     Poco::Net::HTTPSClientSession* session;
     std::string url, key, secretKey;
     int port;
-    std::string authScheme, authInfo;
     public:
     AlpacaBroker(JSONFileParser& file){
         url = file.getSubObjectValue("alpaca","URL");
@@ -27,11 +26,12 @@ class AlpacaBroker: public IBroker{
         request.setKeepAlive(true);
         std::stringstream ss;
         json.stringify(ss);
-        request.setContentLength(0);
+        request.setContentLength(ss.str().size());
         request.setContentType("application/json");
         request.add("APCA-API-KEY-ID",key);
         request.add("APCA-API-SECRET-KEY",secretKey);
-        session->sendRequest(request);
+        std::ostream& o = session->sendRequest(request);
+        json.stringify(o);
 
         // get response
         Poco::Net::HTTPResponse response;
@@ -42,5 +42,9 @@ class AlpacaBroker: public IBroker{
         std::cout << text;
         delete[] text;
     };
+    void getAccount(){
+        sendRequest("GET" ,"/v2/account",Poco::JSON::Object());
+    };
+    
         
 };

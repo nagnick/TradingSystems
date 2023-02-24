@@ -1,4 +1,4 @@
-// this class will handle all network connectivity that involves HTTPS
+// prototype class not used anymore to to major differences between brokers...
 #pragma once
 #include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
@@ -14,21 +14,11 @@ class HTTPSClient{ // pocoClientseccion wrapper
     int port;
     std::string authScheme, authInfo;
     public:
-    HTTPSClient(std::string _url, int _port, std::string authScheme, std::string authInfo){
+    HTTPSClient(std::string _url, int _port, std::string authScheme){
         url = _url;
         port = _port;
         session = new Poco::Net::HTTPSClientSession(url , port);
         this->authScheme = authScheme;
-        if (authScheme.compare("Basic") == 0){
-            std::stringstream ss;
-            Poco::Base64Encoder b64enc(ss);
-            b64enc << authInfo;
-            this->authInfo = ss.str();
-            std::cout << authInfo << std::endl;
-        }
-        else{
-            this->authInfo = authInfo;
-        }
     };
     void setKeepAlive(bool alive){
         session->setKeepAlive(alive);
@@ -38,7 +28,6 @@ class HTTPSClient{ // pocoClientseccion wrapper
     }
     void sendRequest(Poco::JSON::Object json, std::string method, std::string urlExtension){
         // send message
-        std::string version = "1.1"; // don't use for alpaca
         Poco::Net::HTTPRequest request(method, urlExtension);
         //request.setHost(urlExtension, port);
         request.setKeepAlive(true);
@@ -46,7 +35,7 @@ class HTTPSClient{ // pocoClientseccion wrapper
         json.stringify(ss);
         request.setContentLength(0); //ss.str().size()
         request.setContentType("application/json");
-       //request.setCredentials(authScheme, authInfo);
+       request.setCredentials(authScheme, authInfo);
         //request.add("Authorization", "Bearer"); // add token to request??
         //request.setContentType("application/json");
         //std::ostream& o = session->sendRequest(request);

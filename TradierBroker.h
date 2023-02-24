@@ -1,84 +1,75 @@
+#include "JSONFileParser.h"
 #include "IBroker.h"
-// THIS is To be scrapped in favor of an HTTPClient class that this class will hold. Composition not inheritence.
-#include <boost/beast/core.hpp>
-#include <boost/beast/http.hpp>
-#include <boost/beast/version.hpp>
-#include <boost/asio/connect.hpp>
-#include <boost/asio/ip/tcp.hpp>
-#include <cstdlib>
-#include <iostream>
+#include "Poco/Net/HTTPSClientSession.h"
+#include "Poco/Net/HTTPRequest.h"
+#include "Poco/Net/HTTPResponse.h"
+#include "Poco/StreamCopier.h"
+#include "Poco/JSON/Object.h"
+#include "IAsyncPublisher.h"
 #include <string>
 
-namespace beast = boost::beast;     // from <boost/beast.hpp>
-namespace http = beast::http;       // from <boost/beast/http.hpp>
-namespace net = boost::asio;        // from <boost/asio.hpp>
-using tcp = net::ip::tcp;           // from <boost/asio/ip/tcp.hpp>
 
-class TradierBroker: public IBroker{ // fix to keep socket alive ??? and allow for repeated requests 
-    boost::asio::ip::basic_resolver_results<boost::asio::ip::tcp> address;
-    int version;
-    std::string host;
-    std::string port;
-    std::string target;
+class TradierBroker: public IBroker{
+    Poco::Net::HTTPSClientSession* session;
+    std::string url,authScheme, apiKey, accountId;
+    int port;
     public:
-    TradierBroker(std::string brokerAPIToken){
-            /*
-            "    http-client-sync www.example.com 80 /\n" <<
-            "    http-client-sync www.example.com 80 / 1.0\n";*/
-            net::io_context ioc;
-            tcp::resolver resolver(ioc);
-            host = "www.google.com"; // host: www.example.com
-            port = "80"; // port: 80
-            target = "/"; // target: /
-            version = 11;//argc == 5 && !std::strcmp("1.0", argv[4]) ? 10 : 11; // http verion: 1.1 default
-            // Look up the domain name
-            address = resolver.resolve(host, port);
+    TradierBroker(JSONFileParser& file){
+        url = file.getSubObjectValue("tradier","URL");
+        authScheme = file.getSubObjectValue("tradier","AuthScheme");
+        apiKey = file.getSubObjectValue("tradier","APIKey");
+        accountId = file.getSubObjectValue("tradier","AccountNumber");
+        port = 443;
+        session = new Poco::Net::HTTPSClientSession(url , port);
+        //thread = std::thread(&TradierBroker::start, this); // if i figure out how to do async https responses then inherite from IAsyncPublisher
+        // thread = std::thread(&TradierBroker::start, std::ref(*this));
     };
-    // Performs an HTTP GET and prints the response
-    void sendRequestAndGetResponse(){
-        try{
-            // The io_context is required for all I/O
-            net::io_context ioc;
-            // These objects perform our I/O
-            beast::tcp_stream stream(ioc);
-            // Make the connection on the IP address we get from a lookup
-            stream.connect(address);
-
-            // Set up an HTTP GET request message
-            http::request<http::string_body> req{http::verb::get, target, version};
-            req.set(http::field::host, host);
-            req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-
-            // Send the HTTP request to the remote host
-            http::write(stream, req);
-
-            // This buffer is used for reading and must be persisted
-            beast::flat_buffer buffer;
-
-            // Declare a container to hold the response
-            http::response<http::dynamic_body> res;
-
-            // Receive the HTTP response
-            http::read(stream, buffer, res);
-
-            // Write the message to standard out
-            std::cout << res << std::endl;
-
-            // Gracefully close the socket
-            beast::error_code ec;
-            stream.socket().shutdown(tcp::socket::shutdown_both, ec);
-
-            // not_connected happens sometimes
-            // so don't bother reporting it.
-            //
-            if(ec && ec != beast::errc::not_connected)
-                throw beast::system_error{ec};
-
-            // If we get here then the connection is closed gracefully
-        }
-        catch(std::exception const& e)
-        {
-            std::cerr << "Error: " << e.what() << std::endl;
-        }
-    }
+    void sendRequest(std::string method, std::string urlPath, Poco::JSON::Object json){
+       Poco::Net::HTTPRequest request(method, urlPath);
+        //request.setHost(urlExtension, port);
+        request.setKeepAlive(true);
+        std::stringstream ss;
+        json.stringify(ss);
+        request.setContentLength(ss.str().size());
+        request.setContentType("application/json");
+        request.add("Accept","application/json" ); // required by tradier does not read content Type field.
+        request.setCredentials(authScheme, apiKey);
+        std::ostream& o = session->sendRequest(request);
+        json.stringify(o);  // write json to ostream of request
+        //get response
+        Poco::Net::HTTPResponse response;
+        std::istream& s = session->receiveResponse(response);
+        std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
+        char* text = new char[200];
+        s.getline(text,200);
+        std::cout << text << std::endl;
+        delete[] text;
+    };
+    void getBalances(){
+        sendRequest("GET","/v1/accounts/" + accountId + "/balances",Poco::JSON::Object());
+    };
+    // virtual void start(){ // fix to notify subscribers instead of print it to screen
+    //     while(running){ //  fix not safe as sending a new response clears out the input buffer find a fix..... as I want concurrent use of this I think
+    //         //get response
+    //         Poco::Net::HTTPResponse response;
+    //         std::istream& s = session->receiveResponse(response);
+    //         std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
+    //         char* text = new char[200];
+    //         s.getline(text,200);
+    //         std::cout << text << std::endl;
+    //         delete[] text;
+    //         // char* text = new char[200];
+    //         // session->receive(text,200);
+    //         // std::cout << text;
+    //         // delete[] text;
+    //     }
+    // };
+    // virtual void subscribe(ISubscriber* subscriber){ // fix
+    //     std:: cout << "subscribe not implemented" << std::endl;
+    // }
+    // virtual void unSubscribe(ISubscriber* subscriber){ // fix not a publisher at the momnet 
+    //     std:: cout << "unSubscribe not implemented" << std::endl;
+    // };
+    ~TradierBroker(){
+    };
 };

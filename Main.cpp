@@ -4,15 +4,26 @@
 #include "JSONFileParser.h"
 #include "TradingSystemsComponentFactory.h"
 #include "AlpacaBroker.h"
-using namespace std;
+#include <csignal>
 
+std::atomic_bool run = true;
+void signalHandler(int i ){
+    std::cout<< "Shutting down after signal: " << i << std::endl;
+    run = false;
+    // gracefull shutdown from a ctrl c signal....
+    // clean up anything upon shutdown
+}
 int main(){
+    std::signal(SIGINT, signalHandler);
+    
     JSONFileParser file("/mnt/c/Users/nicol/Desktop/TradingSystems/broker.cfg");
-    AlpacaBroker broker(file);
-    //HTTPSClient client(file.getSubObjectValue("alpaca","URL") ,443,file.getSubObjectValue("alpaca","AuthScheme"),file.getSubObjectValue("alpaca","AuthInfo"));
-    //std::cout<< client.connected() << std::endl;
-    //client.sendRequest(Poco::JSON::Object(),"GET","/v2/account");
-    //std::cout<< client.connected() << std::endl;
-    broker.sendRequest("GET","/v2/account",Poco::JSON::Object());
+    // AlpacaBroker broker(file);
+    // broker.getAccount();
+    // std::cout<< std::endl;
+
+    TradierBroker broker2(file);
+    broker2.getBalances();
+    while(run){ // keep main thread alive until killed
+    }
     return 0;
 }
