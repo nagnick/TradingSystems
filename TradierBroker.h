@@ -40,8 +40,9 @@ class TradierBroker: public IBroker{
         Poco::Net::HTTPResponse response;
         std::istream& s = session->receiveResponse(response);
         std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
-        char* text = new char[200];
-        s.getline(text,200);
+        int length = response.getContentLength();
+        char* text = new char[length];
+        s.getline(text,length);
         std::cout << text << std::endl;
         delete[] text;
     };
