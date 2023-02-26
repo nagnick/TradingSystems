@@ -6,5 +6,7 @@ class IBroker{ // classes that inherite this interface are solely for sending tr
     public:
     //virtual void submitOrder() = 0; // order builder??
     //virtual void orderStatus() = 0;
+    virtual void getAllPositions() = 0;
+    virtual void cancelOrderByOrderId(string order_id) = 0;
     virtual ~IBroker(){};
     };

@@ -7,11 +7,11 @@
 #include "Poco/JSON/Object.h"
 #include "IAsyncPublisher.h"
 #include <string>
-
+using std::string;
 
 class TradierBroker: public IBroker{
     Poco::Net::HTTPSClientSession* session;
-    std::string url,authScheme, apiKey, accountId;
+    string url,authScheme, apiKey, accountId;
     int port;
     public:
     TradierBroker(JSONFileParser& file){
@@ -24,7 +24,7 @@ class TradierBroker: public IBroker{
         //thread = std::thread(&TradierBroker::start, this); // if i figure out how to do async https responses then inherite from IAsyncPublisher
         // thread = std::thread(&TradierBroker::start, std::ref(*this));
     };
-    void sendRequest(std::string method, std::string urlPath, Poco::JSON::Object json){
+    void sendRequest(string method, string urlPath, Poco::JSON::Object json){
        Poco::Net::HTTPRequest request(method, urlPath);
         //request.setHost(urlExtension, port);
         request.setKeepAlive(true);
@@ -46,9 +46,41 @@ class TradierBroker: public IBroker{
         std::cout << text << std::endl;
         delete[] text;
     };
+    // user methods DONE
+    void getUserInfo(){
+        sendRequest("GET","/v1/user/profile",Poco::JSON::Object());
+    }
+    // balance methods DONE
     void getBalances(){
         sendRequest("GET","/v1/accounts/" + accountId + "/balances",Poco::JSON::Object());
     };
+    // position methods DONE
+    virtual void getAllPositions(){
+        sendRequest("GET", "/v1/accounts/"+ accountId + "/positions",Poco::JSON::Object());
+    };
+    // create websocket methods WIP
+    virtual void getStreamSessionId(){ // need to retreive session Id to then pass to websocket(AKA TradierPipeline)
+        sendRequest("POST","/v1/markets/events/session", Poco::JSON::Object());
+    }
+    // order methods WIP missing replace/modify order and some special kinds of orders
+    virtual void placeEquityOrder(string symbol, string side, string quantity, string type,
+        string duration, string price, string stop, string tag){
+            // everything from price on is optional
+        sendRequest("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "equity"));
+    }
+    virtual void placeOptionOrder(string symbol, string option_symbol, string side, string quantity, string type,
+        string duration, string price, string stop, string tag){
+            // everything from price on is optional
+        sendRequest("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "option"));
+    }
+    virtual void cancelOrderByOrderId(string order_id){
+        sendRequest("DELETE", "/v1/accounts/"+ accountId + "/orders/" + order_id, Poco::JSON::Object());
+    };
+    // missing could be added: ALL marketData methods(leave for data pipeline websocket?), Watchlist, gain/loss, and History methods
+
+
+
+
     // virtual void start(){ // fix to notify subscribers instead of print it to screen
     //     while(running){ //  fix not safe as sending a new response clears out the input buffer find a fix..... as I want concurrent use of this I think
     //         //get response

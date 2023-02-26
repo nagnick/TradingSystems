@@ -47,7 +47,7 @@ class AlpacaBroker: public IBroker{
     void getAccount(){
         sendRequest("GET" ,"/v2/account",Poco::JSON::Object());
     };
-    // order methods WIP
+    // order methods WIP missing replace/modify order and placeOrder needs clean up or splitting up....
     void getOrder(){
         sendRequest("GET", "/v2/orders", Poco::JSON::Object());
         // default order query more options may be specified
@@ -57,7 +57,10 @@ class AlpacaBroker: public IBroker{
      string trail_percent, string extended_hours, string client_order_id, string order_class,
      string take_profit, string stop_loss){ // https://alpaca.markets/docs/api-references/trading-api/orders/
      // from extended_hours on the fields are optional
-        sendRequest("POST", "/v2/orders", Poco::JSON::Object().set("symbol", symbol)); 
+        sendRequest("POST", "/v2/orders", Poco::JSON::Object().set("symbol", symbol).set("notional",notional).set("qty",qty).set("side",side).set(
+            "type",type).set("time_in_force",time_in_force).set("limit_price",limit_price).set("stop_price",stop_price).set("trail_price",trail_price).set(
+                "trail_percent",trail_percent)
+        ); 
     };
     void getOrderByOrderId(string order_id){
         sendRequest("GET", "/v2/orders/"+order_id, Poco::JSON::Object());
@@ -72,10 +75,10 @@ class AlpacaBroker: public IBroker{
         sendRequest("DELETE", "/v2/orders/" + order_id, Poco::JSON::Object());
     };
     // position methods DONE
-    void getAllOpenPositions(){
+    virtual void getAllPositions(){
         sendRequest("GET", "/v2/positions", Poco::JSON::Object());
     };
-    void getOpenPositionBySymbol(string symbol){
+    void getPositionBySymbol(string symbol){
         sendRequest("GET", "/v2/positions/" + symbol, Poco::JSON::Object());
     };
     void closeAllPositions(bool cancel_orders){ //If true is specified, cancel all open orders before liquidating all positions.

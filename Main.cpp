@@ -17,10 +17,6 @@ int main(){
     std::signal(SIGINT, signalHandler);
     
     JSONFileParser file("/mnt/c/Users/nicol/Desktop/TradingSystems/broker.cfg");
-    // AlpacaBroker broker(file);
-    // broker.getAccount();
-    // std::cout<< std::endl;
-
     TradierBroker broker2(file);
     broker2.getBalances();
     while(run){ // keep main thread alive until killed
