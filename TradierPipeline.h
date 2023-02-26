@@ -1,7 +1,7 @@
 #pragma once
 #include "IDataPipeline.h"
 #include "IAsyncPublisher.h"
-class TradierPipeline: public IDataPipeline, IAsyncPublisher{
+class TradierPipeline: public IDataPipeline, public IAsyncPublisher{
 
     public:
     TradierPipeline(){
