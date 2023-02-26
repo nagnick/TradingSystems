@@ -7,10 +7,13 @@ class IAsyncPublisher: public IPublisher { // fancy subject for a subscriber (ob
     public:
     std::atomic_bool running;
     std::thread thread;
-    IAsyncPublisher():running{true}{
-        
+    IAsyncPublisher():running{false}{
     };
-    virtual void start() = 0;// left to implementer to set normally a spinnig polling loop
+    virtual void loop() = 0;// left to implementer to set normally a spinning polling loop
+    virtual void start(){ // initializes and start thread running loop
+        running = true;
+        thread = std::thread(&IAsyncPublisher::loop, this);
+    }
     virtual void stop(){
         running = false;
     };

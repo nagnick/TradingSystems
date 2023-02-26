@@ -1,10 +1,24 @@
 #pragma once
 #include "IDataPipeline.h"
-class TradierPipeline: public IDataPipeline{
-    
+#include "IAsyncPublisher.h"
+class TradierPipeline: public IDataPipeline, IAsyncPublisher{
+
     public:
-    virtual void subscribeToDataStreams(std::string)=0;
-    virtual void subscribe(ISubscriber* subscriber) = 0;
-    virtual void unSubscribe(ISubscriber* subscriber) = 0;
-    virtual ~TradierPipeline(){};
+    TradierPipeline(){
+    }
+    virtual void loop(){
+        while(running){// a spinning polling loop
+
+        }
+    };
+    virtual void start(){
+        running = true;
+        thread = std::thread(&TradierPipeline::loop, this);
+    }
+    virtual void subscribeToDataStreams(std::string){};
+    virtual void subscribe(ISubscriber* subscriber) {};
+    virtual void unSubscribe(ISubscriber* subscriber){};
+    virtual ~TradierPipeline(){
+        stop();
+    };
 };

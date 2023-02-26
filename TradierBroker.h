@@ -76,6 +76,9 @@ class TradierBroker: public IBroker{
     virtual void cancelOrderByOrderId(string order_id){
         sendRequest("DELETE", "/v1/accounts/"+ accountId + "/orders/" + order_id, Poco::JSON::Object());
     };
+    virtual void getClock(){ // serves the current market timestamp, whether or not the market is currently open, as well as the times of the next market open and close.
+        sendRequest("GET", "/v1/markets/clock", Poco::JSON::Object());
+    }; 
     // missing could be added: ALL marketData methods(leave for data pipeline websocket?), Watchlist, gain/loss, and History methods
 
 

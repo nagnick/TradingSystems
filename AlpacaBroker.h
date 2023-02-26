@@ -111,7 +111,7 @@ class AlpacaBroker: public IBroker{
         sendRequest("GET", "/v2/assets/" + symbol_or_asset_id, Poco::JSON::Object());
     };
     // clock methods DONE
-    void getClock(){ // serves the current market timestamp, whether or not the market is currently open, as well as the times of the next market open and close.
+    virtual void getClock(){ // serves the current market timestamp, whether or not the market is currently open, as well as the times of the next market open and close.
         sendRequest("GET", "/v2/clock", Poco::JSON::Object());
     }; 
     // missing could be added: Watchlist, Calendar, Corporate Actions Announcements, Account Configurations, Account Activities, and Portfolio History methods
