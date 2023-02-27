@@ -9,7 +9,8 @@
 #include <string>
 using std::string;
 
-class TradierBroker: public IBroker{
+class TradierBroker: public IBroker{ //  fix not safe as sending a new response clears out the input buffer find a fix..... as I want concurrent use of this I think
+                                    // maybe use a command pattern(or just event obj?) to queue request and send responses as they come throuh pubsub interface???
     Poco::Net::HTTPSClientSession* session;
     string url,authScheme, apiKey, accountId;
     int port;
