@@ -2,6 +2,7 @@
 #include "TradierBroker.h"
 #include "TradierPipeline.h"
 #include "HTTPSClient.h"
+#include "PrintSubscriber.h"
 #include "JSONFileParser.h"
 #include "TradingSystemsComponentFactory.h"
 #include "AlpacaBroker.h"
@@ -20,8 +21,11 @@ int main(){
     JSONFileParser file("/mnt/c/Users/nicol/Desktop/TradingSystems/broker.cfg");
     TradierBroker broker2(file,"tradierReal");
     //broker2.getBalances();
+    PrintSubscriber sub;
     TradierPipeline* pipe = broker2.getPipeline();
     pipe->start();
+    pipe->subscribe(&sub);
+    pipe->subscribeToSymbolData("SPY",&sub);
     while(run){ // keep main thread alive until killed
     }
     pipe->stop();

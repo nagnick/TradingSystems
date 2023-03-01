@@ -9,6 +9,7 @@
 #include "Poco/JSON/Object.h"
 #include "Poco/Net/WebSocket.h"
 #include <vector>
+#include <map>
 
 class TradierPipeline: public IDataPipeline, public IAsyncPublisher{
     std::string url, sessionId, authScheme, apiKey, urlPath;
@@ -16,10 +17,11 @@ class TradierPipeline: public IDataPipeline, public IAsyncPublisher{
     char* buffer = new char[10000];
     Poco::Net::HTTPSClientSession* session = nullptr;
     Poco::Net::WebSocket* websocket = nullptr;
-    std::vector<ISubscriber*> subscribers;
-    void notifyAll(){ // work in progress send them the buffer
+    std::map<ISubscriber*, std::vector<std::string>> subscribers;
+    std::vector<std::string> symbols;
+    void notifyAll(std::string payload){ // work in progress send them the buffer? also must filter so subs only get data for symbols they want
         for (auto &&i : subscribers){
-            i->notify();
+            i.first->notify(payload);
         }
     }
     public:
@@ -29,23 +31,39 @@ class TradierPipeline: public IDataPipeline, public IAsyncPublisher{
     }
     virtual void connect(){
         session = new Poco::Net::HTTPSClientSession(url, port);
-        Poco::Net::HTTPRequest request("GET", urlPath);
         Poco::Net::HTTPResponse response;
+        Poco::Net::HTTPRequest request("GET", urlPath);
         //request.setKeepAlive(true);
         //request.setContentType("application/json");
         request.add("Accept","application/json" ); // required by tradier does not read content Type field.
         request.setCredentials(authScheme, apiKey);
         request.add("sessionid", sessionId);
-        //request.add("events","[\"orders\"]"); for account info
-        //request.add("symbols","[\"APPL\"]");// list of symbols you wish to receive market data from
         websocket = new Poco::Net::WebSocket(*session,request,response);
         std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl; // check websocket creation status
-        std::string payload("{\"symbols\": [\"SPY\"], \"sessionid\": \"" +sessionId +"\",\"linebreak\": true}");
+        //std::string payload("{\"symbols\": [], \"sessionid\": \"" +sessionId +"\",\"linebreak\": true}"); // can't send it with empty symbol
+        // filter : trade,quote,summary,timesale,tradex. default is all
+        //int flags = Poco::Net::WebSocket::FRAME_TEXT;
+        //websocket->sendFrame(payload.c_str(),payload.length(),flags);
+        //std::cout << payload << std::endl;
+        
+    }
+    virtual void sendRequest(){
+         Poco::Net::HTTPRequest request("GET", urlPath);
+        //request.setKeepAlive(true);
+        //request.setContentType("application/json");
+        request.add("Accept","application/json" ); // required by tradier does not read content Type field.
+        request.setCredentials(authScheme, apiKey);
+        request.add("sessionid", sessionId);
+        std::string payload("{\"symbols\": [");
+        for (auto &&i : symbols){
+            payload = payload + "\"" + i + "\"";
+        }
+        payload = payload + "], \"sessionid\": \"" +sessionId +"\",\"linebreak\": true}";
+        // filter : trade,quote,summary,timesale,tradex default is all
         int flags = Poco::Net::WebSocket::FRAME_TEXT;
         websocket->sendFrame(payload.c_str(),payload.length(),flags);
         std::cout << payload << std::endl;
-        
-    }
+    };
     virtual void loop(){
         int flags =  0;
         while(running){// a spinning polling loop
@@ -54,26 +72,47 @@ class TradierPipeline: public IDataPipeline, public IAsyncPublisher{
             if(recLength > 0){
             std::cout << recLength <<buffer << std::endl;
             }
-            //notifyAll();
-            //stop();// only do once for testing...
+            
+            notifyAll(std::string(buffer));
         }
     };
     virtual void start(){
         running = true;
         thread = std::thread(&TradierPipeline::loop, this);
     }
-    virtual void subscribeToDataStreams(std::string stream){}; // maybe allow subscribers to specify their items of interest 
-    virtual void subscribe(ISubscriber* subscriber) {
-        subscribers.push_back(subscriber);
+    // virtual void subscribeToDataStream(std::string stream, ISubscriber* subscriber){// allow subscribers to specify the stream of data of their symbols to receive 
+    //     //filter : trade,quote,summary,timesale,tradex default is all
+    //     // not implemented yet. maybe overkill on the granularity of the subscribe maybe best to leave it to subscriber to filter out themselves..
+    // };
+    virtual void subscribeToSymbolData(std::string symbol, ISubscriber* subscriber){// allow subscribers to specify the symbol of data to receive
+        auto sub = subscribers.find(subscriber);
+        if(sub != subscribers.end()){
+            for (auto &&i : sub->second){
+                if(i == symbol){
+                    return; // if in sub list then must be in symbols vector
+                }
+            }
+            sub->second.push_back(symbol);
+            for (auto &&i : symbols){ // wasn't in sub list check main symbols vector
+                if(i == symbol){
+                    return;
+                }
+            }
+            symbols.push_back(symbol);
+            sendRequest(); // resend request with updated symbol list
+        } // else fails quitely...
+    }; 
+    virtual void subscribe(ISubscriber* subscriber){ // done
+        if(subscribers.find(subscriber) == subscribers.end()){
+            subscribers.emplace(subscriber,std::vector<std::string>());
+        }
     };
-    virtual void unSubscribe(ISubscriber* subscriber){
-        for (auto i = subscribers.begin(); i != subscribers.end(); i++)
-        {
-            if((*i) == subscriber){
+    virtual void unSubscribe(ISubscriber* subscriber){ // done
+        for (auto i = subscribers.begin(); i != subscribers.end(); i++){
+            if(i->first == subscriber){
                 subscribers.erase(i);
             }
-        }
-        
+        }  
     };
     virtual ~TradierPipeline(){
         stop();
