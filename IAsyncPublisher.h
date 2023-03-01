@@ -9,7 +9,7 @@ class IAsyncPublisher: public IPublisher { // fancy subject for a subscriber (ob
     std::thread thread;
     IAsyncPublisher():running{false}{
     };
-    virtual void loop() = 0;// left to implementer to set normally a spinning polling loop
+    virtual void loop() = 0;// left to implementer to set normally a spinning polling while running loop
     virtual void start(){ // initializes and start thread running loop
         running = true;
         thread = std::thread(&IAsyncPublisher::loop, this);

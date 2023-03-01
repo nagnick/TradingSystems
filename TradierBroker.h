@@ -10,7 +10,7 @@
 #include "IAsyncPublisher.h"
 #include <string>
 using std::string;
-
+// can trade stocks and options. no crypto 
 class TradierBroker: public IBroker{ //  fix not safe as sending a new response clears out the input buffer find a fix..... as I want concurrent use of this I think
                                     // maybe use a command pattern(or just event obj?) to queue request and send responses as they come throuh pubsub interface???
     Poco::Net::HTTPSClientSession* session;
@@ -87,8 +87,8 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
     virtual void getAllPositions(){
         sendRequestAndPrintResponse("GET", "/v1/accounts/"+ accountId + "/positions",Poco::JSON::Object());
     };
-    // create websocket methods WIP
-    virtual TradierPipeline* getPipeline(){ // need to retreive session Id to then pass to websocket(AKA TradierPipeline)
+    // create websocket methods WIP clean it up and remove hard coded stuff
+    virtual IDataPipeline* getPipeline(){ // need to retreive session Id to then pass to websocket(AKA TradierPipeline)
         Poco::JSON::Object::Ptr obj = sendRequestAndReturnJSONResponse("POST","/v1/markets/events/session", Poco::JSON::Object());
         Poco::Dynamic::Var test = obj->get("stream");
         std::cout << test.extract<Poco::JSON::Object::Ptr>()->get("sessionid").toString() << test.extract<Poco::JSON::Object::Ptr>()->get("url").toString() << std::endl;
