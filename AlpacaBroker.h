@@ -52,6 +52,11 @@ class AlpacaBroker: public IBroker{
         sendRequest("GET", "/v2/orders", Poco::JSON::Object());
         // default order query more options may be specified
     };
+    virtual void placeEquityOrder(string symbol, string side, string qty, string type,
+        string duration, string price, string stop){
+            sendRequest("POST", "/v2/orders", Poco::JSON::Object().set("symbol", symbol).set("qty",qty).set("side",side).set(
+            "type",type).set("time_in_force",duration).set("limit_price",price).set("stop_price",stop)); 
+    }
     void placeOrder(string symbol, string qty, string notional, string side, string type,
      string time_in_force, string limit_price, string stop_price, string trail_price,
      string trail_percent, string extended_hours, string client_order_id, string order_class,
@@ -59,7 +64,8 @@ class AlpacaBroker: public IBroker{
      // from extended_hours on the fields are optional
         sendRequest("POST", "/v2/orders", Poco::JSON::Object().set("symbol", symbol).set("notional",notional).set("qty",qty).set("side",side).set(
             "type",type).set("time_in_force",time_in_force).set("limit_price",limit_price).set("stop_price",stop_price).set("trail_price",trail_price).set(
-                "trail_percent",trail_percent)
+                "trail_percent",trail_percent).set("extended_hours",extended_hours).set("client_order_id",client_order_id).set("order_class",order_class).set(
+                    "take_profit",take_profit).set("stop_loss",stop_loss)
         ); 
     };
     void getOrderByOrderId(string order_id){

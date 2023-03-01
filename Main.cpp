@@ -20,7 +20,7 @@ int main(){
     JSONFileParser file("/mnt/c/Users/nicol/Desktop/TradingSystems/broker.cfg");
     TradierBroker broker2(file,"tradierReal");
     //broker2.getBalances();
-    TradierPipeline* pipe = broker2.getStreamSession();
+    TradierPipeline* pipe = broker2.getPipeline();
     pipe->start();
     while(run){ // keep main thread alive until killed
     }

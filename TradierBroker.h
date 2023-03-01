@@ -88,7 +88,7 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         sendRequestAndPrintResponse("GET", "/v1/accounts/"+ accountId + "/positions",Poco::JSON::Object());
     };
     // create websocket methods WIP
-    virtual TradierPipeline* getStreamSession(){ // need to retreive session Id to then pass to websocket(AKA TradierPipeline)
+    virtual TradierPipeline* getPipeline(){ // need to retreive session Id to then pass to websocket(AKA TradierPipeline)
         Poco::JSON::Object::Ptr obj = sendRequestAndReturnJSONResponse("POST","/v1/markets/events/session", Poco::JSON::Object());
         Poco::Dynamic::Var test = obj->get("stream");
         std::cout << test.extract<Poco::JSON::Object::Ptr>()->get("sessionid").toString() << test.extract<Poco::JSON::Object::Ptr>()->get("url").toString() << std::endl;
@@ -96,14 +96,23 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
     }
     // order methods WIP missing replace/modify order and some special kinds of orders
     virtual void placeEquityOrder(string symbol, string side, string quantity, string type,
+        string duration, string price, string stop){
+            // everything from price on is optional
+        sendRequestAndPrintResponse("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "equity").set("symbol",symbol).set(
+            "side", side).set("quantity",quantity).set("type",type).set("duration",duration).set("price",price).set("stop",stop));
+    }
+    virtual void placeEquityOrder(string symbol, string side, string quantity, string type,
         string duration, string price, string stop, string tag){
             // everything from price on is optional
-        sendRequestAndPrintResponse("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "equity"));
+        sendRequestAndPrintResponse("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "equity").set("symbol",symbol).set(
+            "side", side).set("quantity",quantity).set("type",type).set("duration",duration).set("price",price).set("stop",stop).set("tag",tag));
     }
     virtual void placeOptionOrder(string symbol, string option_symbol, string side, string quantity, string type,
         string duration, string price, string stop, string tag){
             // everything from price on is optional
-        sendRequestAndPrintResponse("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "option"));
+        sendRequestAndPrintResponse("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "option").set("symbol",symbol).set(
+            "option_symbol",option_symbol).set("side", side).set("quantity",quantity).set("type",type).set("duration",duration).set("price",price).set(
+                "stop",stop).set("tag",tag));
     }
     virtual void cancelOrderByOrderId(string order_id){
         sendRequestAndPrintResponse("DELETE", "/v1/accounts/"+ accountId + "/orders/" + order_id, Poco::JSON::Object());
