@@ -6,9 +6,11 @@
 #include "Poco/Net/HTTPResponse.h"
 #include "Poco/StreamCopier.h"
 #include "Poco/JSON/Object.h"
+#include "AlpacaPipeline.h"
+
 #include <string>
 using std::string;
-class AlpacaBroker: public IBroker{
+class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
     Poco::Net::HTTPSClientSession* session;
     std::string url, key, secretKey;
     int port;
@@ -119,6 +121,10 @@ class AlpacaBroker: public IBroker{
     // clock methods DONE
     virtual void getClock(){ // serves the current market timestamp, whether or not the market is currently open, as well as the times of the next market open and close.
         sendRequest("GET", "/v2/clock", Poco::JSON::Object());
-    }; 
+    };
+    // market data pipeline WIP
+     virtual IDataPipeline* getPipeline(){
+        return new AlpacaPipeline();
+     }
     // missing could be added: Watchlist, Calendar, Corporate Actions Announcements, Account Configurations, Account Activities, and Portfolio History methods
 };

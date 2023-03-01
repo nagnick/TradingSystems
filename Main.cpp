@@ -22,7 +22,7 @@ int main(){
     TradierBroker broker2(file,"tradierReal");
     //broker2.getBalances();
     PrintSubscriber sub;
-    TradierPipeline* pipe = broker2.getPipeline();
+    TradierPipeline* pipe = (TradierPipeline*)broker2.getPipeline();
     pipe->start();
     pipe->subscribe(&sub);
     pipe->subscribeToSymbolData("SPY",&sub);
