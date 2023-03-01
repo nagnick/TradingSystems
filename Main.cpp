@@ -1,5 +1,6 @@
 #include <iostream>
 #include "TradierBroker.h"
+#include "TradierPipeline.h"
 #include "HTTPSClient.h"
 #include "JSONFileParser.h"
 #include "TradingSystemsComponentFactory.h"
@@ -17,9 +18,13 @@ int main(){
     std::signal(SIGINT, signalHandler);
     
     JSONFileParser file("/mnt/c/Users/nicol/Desktop/TradingSystems/broker.cfg");
-    TradierBroker broker2(file);
-    broker2.getBalances();
+    TradierBroker broker2(file,"tradierReal");
+    //broker2.getBalances();
+    TradierPipeline* pipe = broker2.getStreamSession();
+    pipe->start();
     while(run){ // keep main thread alive until killed
     }
+    pipe->stop();
+    std::cout << "killed threads" << std::endl;
     return 0;
 }
