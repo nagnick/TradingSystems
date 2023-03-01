@@ -92,7 +92,7 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         Poco::JSON::Object::Ptr obj = sendRequestAndReturnJSONResponse("POST","/v1/markets/events/session", Poco::JSON::Object());
         Poco::Dynamic::Var test = obj->get("stream");
         std::cout << test.extract<Poco::JSON::Object::Ptr>()->get("sessionid").toString() << test.extract<Poco::JSON::Object::Ptr>()->get("url").toString() << std::endl;
-        return new TradierPipeline("stream.tradier.com",test.extract<Poco::JSON::Object::Ptr>()->get("sessionid").toString(),authScheme,apiKey,"/v1/markets/events/session",port);
+        return new TradierPipeline("ws.tradier.com",test.extract<Poco::JSON::Object::Ptr>()->get("sessionid").toString(),authScheme,apiKey,"/v1/markets/events",port);
     }
     // order methods WIP missing replace/modify order and some special kinds of orders
     virtual void placeEquityOrder(string symbol, string side, string quantity, string type,
