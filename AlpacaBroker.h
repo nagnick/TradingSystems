@@ -123,8 +123,8 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         sendRequest("GET", "/v2/clock", Poco::JSON::Object());
     };
     // market data pipeline WIP
-     virtual IDataPipeline* getPipeline(){
-        return new AlpacaPipeline();
+     virtual IDataPipeline* getPipeline(){ // /v2/{source} iex or sip to {source} iex is all you get without paying for subscription 
+        return new AlpacaPipeline("stream.data.alpaca.markets",key,secretKey,"/v2/iex",port);
      }
     // missing could be added: Watchlist, Calendar, Corporate Actions Announcements, Account Configurations, Account Activities, and Portfolio History methods
 };

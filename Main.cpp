@@ -20,9 +20,10 @@ int main(){
     
     JSONFileParser file("/mnt/c/Users/nicol/Desktop/TradingSystems/broker.cfg");
     TradierBroker broker2(file,"tradierReal");
+    AlpacaBroker broker1(file);
     //broker2.getBalances();
     PrintSubscriber sub;
-    TradierPipeline* pipe = (TradierPipeline*)broker2.getPipeline();
+    AlpacaPipeline* pipe = (AlpacaPipeline*)broker1.getPipeline();
     pipe->start();
     pipe->subscribe(&sub);
     pipe->subscribeToSymbolData("SPY",&sub);
