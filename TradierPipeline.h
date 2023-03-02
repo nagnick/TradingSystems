@@ -29,28 +29,18 @@ class TradierPipeline: public IDataPipeline, public IAsyncPublisher{
     ,authScheme(_authScheme),apiKey(_apiKey), urlPath(_urlPath),port(_port){
         connect();
     }
-    virtual void connect(){
+    virtual void connect(){ // do only once to start up websocket
         session = new Poco::Net::HTTPSClientSession(url, port);
         Poco::Net::HTTPResponse response;
         Poco::Net::HTTPRequest request("GET", urlPath);
-        //request.setKeepAlive(true);
-        //request.setContentType("application/json");
         request.add("Accept","application/json" ); // required by tradier does not read content Type field.
         request.setCredentials(authScheme, apiKey);
         request.add("sessionid", sessionId);
         websocket = new Poco::Net::WebSocket(*session,request,response);
         std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl; // check websocket creation status
-        //std::string payload("{\"symbols\": [], \"sessionid\": \"" +sessionId +"\",\"linebreak\": true}"); // can't send it with empty symbol
-        // filter : trade,quote,summary,timesale,tradex. default is all
-        //int flags = Poco::Net::WebSocket::FRAME_TEXT;
-        //websocket->sendFrame(payload.c_str(),payload.length(),flags);
-        //std::cout << payload << std::endl;
-        
     }
-    virtual void sendRequest(){
+    virtual void sendRequest(){ // resend request when subs sub to new symbol
          Poco::Net::HTTPRequest request("GET", urlPath);
-        //request.setKeepAlive(true);
-        //request.setContentType("application/json");
         request.add("Accept","application/json" ); // required by tradier does not read content Type field.
         request.setCredentials(authScheme, apiKey);
         request.add("sessionid", sessionId);
@@ -67,12 +57,8 @@ class TradierPipeline: public IDataPipeline, public IAsyncPublisher{
     virtual void loop(){
         int flags =  0;
         while(running){// a spinning polling loop
-            int recLength = websocket->receiveFrame((void*)buffer,10000,flags);
-            //std::cout << flags << recLength << websocket->getError();
-            if(recLength > 0){
-            std::cout << recLength <<buffer << std::endl;
-            }
-            
+            websocket->receiveFrame((void*)buffer,10000,flags);
+            //std::cout <<buffer << std::endl;
             notifyAll(std::string(buffer));
         }
     };
