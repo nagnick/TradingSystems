@@ -15,10 +15,10 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
     std::string url, key, secretKey;
     int port;
     public:
-    AlpacaBroker(JSONFileParser& file){
-        url = file.getSubObjectValue("alpaca","URL");
-        key = file.getSubObjectValue("alpaca","APIKey");
-        secretKey = file.getSubObjectValue("alpaca","APISecretKey");
+    AlpacaBroker(JSONFileParser& file, std::string accountJSONKey){
+        url = file.getSubObjectValue(accountJSONKey,"URL");
+        key = file.getSubObjectValue(accountJSONKey,"APIKey");
+        secretKey = file.getSubObjectValue(accountJSONKey,"APISecretKey");
         port = 443;
         session = new Poco::Net::HTTPSClientSession(url , port);
         session->setKeepAlive(true);
@@ -122,9 +122,5 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
     virtual void getClock(){ // serves the current market timestamp, whether or not the market is currently open, as well as the times of the next market open and close.
         sendRequest("GET", "/v2/clock", Poco::JSON::Object());
     };
-    // market data pipeline WIP
-     virtual IDataPipeline* getPipeline(){ // /v2/{source} iex or sip to {source} iex is all you get without paying for subscription 
-        return new AlpacaPipeline("stream.data.alpaca.markets",key,secretKey,"/v2/iex",port);
-     }
     // missing could be added: Watchlist, Calendar, Corporate Actions Announcements, Account Configurations, Account Activities, and Portfolio History methods
 };

@@ -19,17 +19,20 @@ int main(){
     std::signal(SIGINT, signalHandler);
     
     JSONFileParser file("/mnt/c/Users/nicol/Desktop/TradingSystems/broker.cfg");
-    TradierBroker broker2(file,"tradierReal");
-    AlpacaBroker broker1(file);
+    TradierBroker brokerT(file,"tradierReal");
+    AlpacaBroker brokerA(file, "alpaca");
     //broker2.getBalances();
     PrintSubscriber sub;
-    AlpacaPipeline* pipe = (AlpacaPipeline*)broker1.getPipeline();
-    pipe->start();
-    pipe->subscribe(&sub);
-    pipe->subscribeToSymbolData("SPY",&sub);
+    // /v2/{source} iex or sip to {source} iex is all you get without paying for subscription 
+    AlpacaPipeline* pipeA = new AlpacaPipeline(file,"alpaca", "/v2/iex", 443);
+    std::string sessionId = brokerT.getWebsocketSessionId();
+    TradierPipeline* pipeT = new TradierPipeline(file,"tradierReal", sessionId, "/v1/markets/events", 443);
+    pipeT->start();
+    pipeT->subscribe(&sub);
+    pipeT->subscribeToSymbolData("SPY",&sub);
     while(run){ // keep main thread alive until killed
     }
-    pipe->stop();
+    pipeT->stop();
     std::cout << "killed threads" << std::endl;
     return 0;
 }

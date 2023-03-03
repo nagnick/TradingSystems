@@ -87,13 +87,12 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
     virtual void getAllPositions(){
         sendRequestAndPrintResponse("GET", "/v1/accounts/"+ accountId + "/positions",Poco::JSON::Object());
     };
-    // create websocket methods WIP clean it up and remove hard coded stuff
-    virtual IDataPipeline* getPipeline(){ // need to retreive session Id to then pass to websocket(AKA TradierPipeline)
+    virtual std::string getWebsocketSessionId(){ // need to retreive session Id to then pass to websocket(AKA TradierPipeline)
         Poco::JSON::Object::Ptr obj = sendRequestAndReturnJSONResponse("POST","/v1/markets/events/session", Poco::JSON::Object());
         Poco::Dynamic::Var test = obj->get("stream");
-        std::cout << test.extract<Poco::JSON::Object::Ptr>()->get("sessionid").toString() << test.extract<Poco::JSON::Object::Ptr>()->get("url").toString() << std::endl;
-        return new TradierPipeline("ws.tradier.com",test.extract<Poco::JSON::Object::Ptr>()->get("sessionid").toString(),authScheme,apiKey,"/v1/markets/events",port);
-    }
+        //std::cout << test.extract<Poco::JSON::Object::Ptr>()->get("sessionid").toString() << test.extract<Poco::JSON::Object::Ptr>()->get("url").toString() << std::endl;
+        return test.extract<Poco::JSON::Object::Ptr>()->get("sessionid").toString();
+    };
     // order methods WIP missing replace/modify order and some special kinds of orders
     virtual void placeEquityOrder(string symbol, string side, string quantity, string type,
         string duration, string price, string stop){

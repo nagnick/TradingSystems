@@ -1,6 +1,7 @@
 #pragma once
 #include "IDataPipeline.h"
 #include "IAsyncPublisher.h"
+#include "JSONFileParser.h"
 
 #include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
@@ -25,8 +26,13 @@ class TradierPipeline: public IDataPipeline, public IAsyncPublisher{
         }
     }
     public:
-    TradierPipeline(std::string _url, std::string _sessionId, std::string _authScheme, std::string _apiKey,std::string _urlPath, int _port):url(_url),sessionId(_sessionId)
-    ,authScheme(_authScheme),apiKey(_apiKey), urlPath(_urlPath),port(_port){
+    TradierPipeline(JSONFileParser& file, std::string  accountJSONKey, std::string _sessionId, std::string _urlPath, int _port){
+        sessionId = _sessionId;
+        urlPath = _urlPath;
+        port = _port;
+        url = file.getSubObjectValue(accountJSONKey,"WSURL");
+        authScheme = file.getSubObjectValue(accountJSONKey,"AuthScheme");
+        apiKey = file.getSubObjectValue(accountJSONKey,"APIKey");
         connect();
     }
     virtual void connect(){ // do only once to start up websocket

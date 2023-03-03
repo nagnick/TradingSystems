@@ -23,8 +23,12 @@ class AlpacaPipeline : public IDataPipeline, public IAsyncPublisher {
     std::map<ISubscriber*, std::vector<std::string>> subscribers;
     std::vector<std::string> symbols;
     public:
-    AlpacaPipeline(std::string _url,std::string _apiKey, std::string _apiSecretKey,std::string _urlPath, int _port):url(_url)
-    ,apiKey(_apiKey),apiSecretKey(_apiSecretKey), urlPath(_urlPath),port(_port){
+    AlpacaPipeline(JSONFileParser& file, std::string  accountJSONKey, std::string _urlPath, int _port){
+        urlPath = _urlPath;
+        port = _port;
+        url = file.getSubObjectValue(accountJSONKey,"WSURL");
+        apiKey = file.getSubObjectValue(accountJSONKey,"APIKey");
+        apiSecretKey = file.getSubObjectValue(accountJSONKey,"APISecretKey");
         connect();
     };
     virtual void connect(){ // do only once to start up websocket
@@ -45,7 +49,7 @@ class AlpacaPipeline : public IDataPipeline, public IAsyncPublisher {
         Poco::Net::HTTPRequest request("GET", urlPath);
         request.add("APCA-API-KEY-ID",apiKey);
         request.add("APCA-API-SECRET-KEY",apiSecretKey);
-        request.add("Accept-Encoding","gzip,deflate");
+        //request.add("Accept-Encoding","gzip,deflate"); // i guess I don't need to deflate it
         std::string sym;
         for (auto &&i : symbols){
             sym = sym + "\"" + i + "\"";
@@ -96,9 +100,9 @@ class AlpacaPipeline : public IDataPipeline, public IAsyncPublisher {
             std::istream is(s1.rdbuf());
             std::stringstream ss;
             buffer[length] = '\0'; // add nullterminator to end of string to prevent grabage at end
-            ss << buffer;
-            Poco::InflatingInputStream inflater(ss, Poco::InflatingStreamBuf::STREAM_GZIP);
-            inflater.read(buffer,10000);
+            // ss << buffer; // i guess i don't need to deflate it???
+            // Poco::InflatingInputStream inflater(ss, Poco::InflatingStreamBuf::STREAM_GZIP);
+            // inflater.read(buffer,10000);
             std::string temp(buffer);
             //std::cout << temp << std::endl;
             notifyAll(temp );
