@@ -123,31 +123,6 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
     }; 
     // missing could be added: ALL marketData methods(leave for data pipeline websocket?), Watchlist, gain/loss, and History methods
 
-
-
-
-    // virtual void start(){ // fix to notify subscribers instead of print it to screen
-    //     while(running){ //  fix not safe as sending a new response clears out the input buffer find a fix..... as I want concurrent use of this I think
-    //         //get response
-    //         Poco::Net::HTTPResponse response;
-    //         std::istream& s = session->receiveResponse(response);
-    //         std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
-    //         char* text = new char[200];
-    //         s.getline(text,200);
-    //         std::cout << text << std::endl;
-    //         delete[] text;
-    //         // char* text = new char[200];
-    //         // session->receive(text,200);
-    //         // std::cout << text;
-    //         // delete[] text;
-    //     }
-    // };
-    // virtual void subscribe(ISubscriber* subscriber){ // fix
-    //     std:: cout << "subscribe not implemented" << std::endl;
-    // }
-    // virtual void unSubscribe(ISubscriber* subscriber){ // fix not a publisher at the momnet 
-    //     std:: cout << "unSubscribe not implemented" << std::endl;
-    // };
     ~TradierBroker(){
     };
 };
