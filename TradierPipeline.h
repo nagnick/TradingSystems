@@ -26,7 +26,7 @@ class TradierPipeline: public IDataPipeline, public IAsyncPublisher{
         }
     }
     public:
-    TradierPipeline(JSONFileParser& file, std::string  accountJSONKey, std::string _sessionId, std::string _urlPath, int _port){
+    TradierPipeline(JSONFileParser& file, std::string  accountJSONKey, std::string _sessionId, std::string _urlPath, int _port){ // urlPath = "/v1/markets/events"
         sessionId = _sessionId;
         urlPath = _urlPath;
         port = _port;
@@ -76,7 +76,7 @@ class TradierPipeline: public IDataPipeline, public IAsyncPublisher{
     //     //filter : trade,quote,summary,timesale,tradex default is all
     //     // not implemented yet. maybe overkill on the granularity of the subscribe maybe best to leave it to subscriber to filter out themselves..
     // };
-    virtual void subscribeToSymbolData(std::string symbol, ISubscriber* subscriber){// allow subscribers to specify the symbol of data to receive
+    virtual void subscribeToDataStream(std::string symbol, ISubscriber* subscriber){// allow subscribers to specify the symbol of data to receive
         auto sub = subscribers.find(subscriber);
         if(sub != subscribers.end()){
             for (auto &&i : sub->second){

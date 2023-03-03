@@ -27,7 +27,7 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         //thread = std::thread(&TradierBroker::start, this); // if i figure out how to do async https responses then inherite from IAsyncPublisher
         // thread = std::thread(&TradierBroker::start, std::ref(*this));
     };
-    void sendRequestAndPrintResponse(string method, string urlPath, Poco::JSON::Object json){
+    std::string sendRequestAndReturnString(string method, string urlPath, Poco::JSON::Object json){
         Poco::Net::HTTPRequest request(method, urlPath);
         //request.setHost(urlExtension, port);
         request.setKeepAlive(true);
@@ -47,8 +47,10 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         std::cout << length << std::endl;
         char* text = new char[length];
         s.getline(text,length);
-        std::cout << text << std::endl;
+        //std::cout << text << std::endl;
+        std::string res(text);
         delete[] text;
+        return res;
     };
     Poco::JSON::Object::Ptr sendRequestAndReturnJSONResponse(string method, string urlPath, Poco::JSON::Object json){
         Poco::Net::HTTPRequest request(method, urlPath);
@@ -77,15 +79,15 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
     };
     // user methods DONE
     void getUserInfo(){
-        sendRequestAndPrintResponse("GET","/v1/user/profile",Poco::JSON::Object());
+        sendRequestAndReturnString("GET","/v1/user/profile",Poco::JSON::Object());
     }
     // balance methods DONE
     void getBalances(){
-        sendRequestAndPrintResponse("GET","/v1/accounts/" + accountId + "/balances",Poco::JSON::Object());
+        sendRequestAndReturnString("GET","/v1/accounts/" + accountId + "/balances",Poco::JSON::Object());
     };
     // position methods DONE
     virtual void getAllPositions(){
-        sendRequestAndPrintResponse("GET", "/v1/accounts/"+ accountId + "/positions",Poco::JSON::Object());
+        sendRequestAndReturnString("GET", "/v1/accounts/"+ accountId + "/positions",Poco::JSON::Object());
     };
     virtual std::string getWebsocketSessionId(){ // need to retreive session Id to then pass to websocket(AKA TradierPipeline)
         Poco::JSON::Object::Ptr obj = sendRequestAndReturnJSONResponse("POST","/v1/markets/events/session", Poco::JSON::Object());
@@ -97,27 +99,27 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
     virtual void placeEquityOrder(string symbol, string side, string quantity, string type,
         string duration, string price, string stop){
             // everything from price on is optional
-        sendRequestAndPrintResponse("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "equity").set("symbol",symbol).set(
+        sendRequestAndReturnString("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "equity").set("symbol",symbol).set(
             "side", side).set("quantity",quantity).set("type",type).set("duration",duration).set("price",price).set("stop",stop));
     }
     virtual void placeEquityOrder(string symbol, string side, string quantity, string type,
         string duration, string price, string stop, string tag){
             // everything from price on is optional
-        sendRequestAndPrintResponse("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "equity").set("symbol",symbol).set(
+        sendRequestAndReturnString("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "equity").set("symbol",symbol).set(
             "side", side).set("quantity",quantity).set("type",type).set("duration",duration).set("price",price).set("stop",stop).set("tag",tag));
     }
     virtual void placeOptionOrder(string symbol, string option_symbol, string side, string quantity, string type,
         string duration, string price, string stop, string tag){
             // everything from price on is optional
-        sendRequestAndPrintResponse("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "option").set("symbol",symbol).set(
+        sendRequestAndReturnString("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "option").set("symbol",symbol).set(
             "option_symbol",option_symbol).set("side", side).set("quantity",quantity).set("type",type).set("duration",duration).set("price",price).set(
                 "stop",stop).set("tag",tag));
     }
     virtual void cancelOrderByOrderId(string order_id){
-        sendRequestAndPrintResponse("DELETE", "/v1/accounts/"+ accountId + "/orders/" + order_id, Poco::JSON::Object());
+        sendRequestAndReturnString("DELETE", "/v1/accounts/"+ accountId + "/orders/" + order_id, Poco::JSON::Object());
     };
     virtual void getClock(){ // serves the current market timestamp, whether or not the market is currently open, as well as the times of the next market open and close.
-        sendRequestAndPrintResponse("GET", "/v1/markets/clock", Poco::JSON::Object());
+        sendRequestAndReturnString("GET", "/v1/markets/clock", Poco::JSON::Object());
     }; 
     // missing could be added: ALL marketData methods(leave for data pipeline websocket?), Watchlist, gain/loss, and History methods
 

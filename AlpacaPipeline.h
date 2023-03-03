@@ -23,7 +23,7 @@ class AlpacaPipeline : public IDataPipeline, public IAsyncPublisher {
     std::map<ISubscriber*, std::vector<std::string>> subscribers;
     std::vector<std::string> symbols;
     public:
-    AlpacaPipeline(JSONFileParser& file, std::string  accountJSONKey, std::string _urlPath, int _port){
+    AlpacaPipeline(JSONFileParser& file, std::string  accountJSONKey, std::string _urlPath, int _port){  // pathUrl = /v2/{source} iex or sip to {source} iex is all you get without paying for subscription 
         urlPath = _urlPath;
         port = _port;
         url = file.getSubObjectValue(accountJSONKey,"WSURL");
@@ -62,7 +62,7 @@ class AlpacaPipeline : public IDataPipeline, public IAsyncPublisher {
         websocket->sendFrame(payload.c_str(),payload.length(),flags);
         std::cout << payload << std::endl;
     };
-    virtual void subscribeToSymbolData(std::string symbol, ISubscriber* subscriber){
+    virtual void subscribeToDataStream(std::string symbol, ISubscriber* subscriber){ // allow subscribers to specify the symbol of data to receive
         auto sub = subscribers.find(subscriber);
         if(sub != subscribers.end()){
             for (auto &&i : sub->second){
