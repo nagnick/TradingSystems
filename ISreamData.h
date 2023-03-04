@@ -1,6 +1,6 @@
 #include <string>
 
-class IMarketData{
+class IStreamData{
     virtual std::string getDataType() = 0;
-    virtual ~IMarketData(){};
+    virtual ~IStreamData(){};
 }
