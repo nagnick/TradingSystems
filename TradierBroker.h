@@ -1,3 +1,4 @@
+#pragma once
 #include "JSONFileParser.h"
 #include "IBroker.h"
 #include "TradierPipeline.h"
