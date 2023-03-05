@@ -2,6 +2,7 @@
 #include "IDataPipeline.h"
 #include "IAsyncPublisher.h"
 #include "JSONFileParser.h"
+#include "StreamData.h"
 
 #include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
@@ -20,9 +21,9 @@ class TradierPipeline: public IDataPipeline, public IAsyncPublisher{
     Poco::Net::WebSocket* websocket = nullptr;
     std::map<ISubscriber*, std::vector<std::string>> subscribers;
     std::vector<std::string> symbols;
-    void notifyAll(std::string payload){ // work in progress send them the buffer? also must filter so subs only get data for symbols they want
+    void notifyAll(std::shared_ptr<IStreamData> data){ // work in progress send them the buffer? also must filter so subs only get data for symbols they want
         for (auto &&i : subscribers){
-            i.first->notify(payload);
+            i.first->notify(data);
         }
     }
     public:
@@ -43,10 +44,10 @@ class TradierPipeline: public IDataPipeline, public IAsyncPublisher{
         request.setCredentials(authScheme, apiKey);
         request.add("sessionid", sessionId);
         websocket = new Poco::Net::WebSocket(*session,request,response);
-        std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl; // check websocket creation status
+    //std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl; // check websocket creation status
     }
     virtual void sendRequest(){ // resend request when subs sub to new symbol
-         Poco::Net::HTTPRequest request("GET", urlPath);
+        Poco::Net::HTTPRequest request("GET", urlPath);
         request.add("Accept","application/json" ); // required by tradier does not read content Type field.
         request.setCredentials(authScheme, apiKey);
         request.add("sessionid", sessionId);
@@ -58,14 +59,57 @@ class TradierPipeline: public IDataPipeline, public IAsyncPublisher{
         // filter : trade,quote,summary,timesale,tradex default is all
         int flags = Poco::Net::WebSocket::FRAME_TEXT;
         websocket->sendFrame(payload.c_str(),payload.length(),flags);
-        std::cout << payload << std::endl;
+    //std::cout << payload << std::endl;
     };
     virtual void loop(){
         int flags =  0;
         while(running){// a spinning polling loop
-            websocket->receiveFrame((void*)buffer,10000,flags);
-            //std::cout <<buffer << std::endl;
-            notifyAll(std::string(buffer));
+            int length = websocket->receiveFrame((void*)buffer,10000,flags);
+            buffer[length] = '\0'; // add nullterminator to end of string to prevent grabage at end
+        //std::cout << "whole chunk:"<<buffer << "\nParts:" <<  std::endl;
+
+            std::stringstream ss(buffer);
+            std::string output;
+            Poco::JSON::Parser parser;
+            Poco::Dynamic::Var result;
+            Poco::JSON::Object::Ptr object;
+            //parse into different data types
+            while(std::getline(ss,output,'\n')){ // each json object split by newline in tradier by default
+        //std::cout << output <<std::endl;
+
+                result =parser.parse(output);
+                object = result.extract<Poco::JSON::Object::Ptr>();
+                std::string type = object->get("type").toString();
+                if(type == "trade"){
+                    std::string symbol, exchangeCode, price, tradeSize, time;
+                    symbol = object->get("symbol").toString();
+                    exchangeCode = object->get("exch").toString();
+                    price = object->get("price").toString();
+                    tradeSize = object->get("size").toString();
+                    time = object->get("date").toString();
+                    // last price "last" and cumulative volume "cvol" are not captured as alpaca doesn't have those
+                    notifyAll(std::shared_ptr<TradeData>(new TradeData(symbol,exchangeCode,price,tradeSize,time)));
+                }
+                else if(type == "quote"){
+                    std::string symbol, bidPrice, bidSize, bidExchange, bidTime, askPrice, askSize, askExchange, askTime; 
+                    symbol = object->get("symbol").toString();
+                    bidPrice = object->get("bid").toString();
+                    bidSize = object->get("bidsz").toString();
+                    bidExchange = object->get("bidexch").toString();
+                    bidTime = object->get("biddate").toString();
+                    askPrice = object->get("ask").toString();
+                    askSize = object->get("asksz").toString();
+                    askExchange = object->get("askexch").toString();
+                    askTime = object->get("askdate").toString();
+                    // all parts of quote are captured
+                    notifyAll(std::shared_ptr<QuoteData>(new QuoteData(symbol,bidPrice,bidSize,bidExchange,bidTime,askPrice,askSize,askExchange,askTime)));
+                }
+                else{
+                    //give the data in an other data object 
+                    notifyAll(std::shared_ptr<OtherData>(new OtherData(output)));  // trash until I find use for these other data feeds i get for free from pipeline
+                    // output may have more data then it should but it will give the object all the data to rep the unprocessed JSON object
+                }
+            }
         }
     };
     virtual void start(){

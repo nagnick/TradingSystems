@@ -34,4 +34,7 @@ class JSONFileParser{
         test = subObject->get(key);
         return test.toString();
     }
+    ~JSONFileParser(){
+        
+    }
 };
