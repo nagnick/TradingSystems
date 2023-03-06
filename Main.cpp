@@ -26,12 +26,12 @@ int main(){
     AlpacaPipeline* pipeA = new AlpacaPipeline(file,"alpaca", "/v2/iex", 443);
     std::string sessionId = brokerT.getWebsocketSessionId();
     TradierPipeline* pipeT = new TradierPipeline(file,"tradierReal", sessionId, "/v1/markets/events", 443);
-    pipeT->start();
-    pipeT->subscribe(&sub);
-    pipeT->subscribeToDataStream("SPY",&sub);
+    pipeA->start();
+    pipeA->subscribe(&sub);
+    pipeA->subscribeToDataStream("SPY",&sub);
     while(run){ // keep main thread alive until killed
     }
-    pipeT->stop();
+    pipeA->stop();
     std::cout << "killed threads" << std::endl;
     return 0;
 }

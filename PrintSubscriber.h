@@ -1,7 +1,7 @@
 #pragma once
-#include "ISubscriber.h"
+#include "IDataPipelineSubscriber.h"
 #include "StreamData.h"
-class PrintSubscriber: public ISubscriber{
+class PrintSubscriber: public IDataPipelineSubscriber{
     public:
     PrintSubscriber(){
         
