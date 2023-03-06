@@ -22,8 +22,42 @@ class AlpacaPipeline : public IDataPipeline, public IAsyncPublisher {
 
     Poco::Net::HTTPSClientSession* session = nullptr;
     Poco::Net::WebSocket* websocket = nullptr;
-    std::map<ISubscriber*, std::vector<std::string>> subscribers;
+    std::map<IDataPipelineSubscriber*, std::vector<std::string>> subscribers;
     std::vector<std::string> symbols;
+
+    bool subscribedTo(IDataPipelineSubscriber * sub ,std::string symbol){// checks if sub is subscribed to symbol
+        std::vector<std::string> subedSymbols = subscribers.at(sub);
+        for (auto &&i : subedSymbols){
+            if(i == symbol){
+                return true;
+            }
+        }
+        return false;
+    }
+    void notifyAll(std::shared_ptr<IStreamData> data){ //filters so subs only get data for symbols they want
+        std::string symbol = "";
+        switch(data->getDataType()){
+            case 0:{
+                std::shared_ptr<TradeData> trade = std::dynamic_pointer_cast<TradeData,IStreamData>(data);
+                symbol = trade->symbol;
+                break;
+            }
+            case 1:{
+                std::shared_ptr<QuoteData> quote = std::dynamic_pointer_cast<QuoteData,IStreamData>(data);
+                symbol = quote->symbol;
+                break;
+            }
+            default:{
+                break;
+            }
+        }
+        for (auto &&i : subscribers){
+            if(symbol == "" || subscribedTo(i.first,symbol)){ // default data is sent
+                i.first->notify(data);
+            }
+        }
+    };
+
     public:
     AlpacaPipeline(JSONFileParser& file, std::string  accountJSONKey, std::string _urlPath, int _port){  // pathUrl = /v2/{source} iex or sip to {source} iex is all you get without paying for subscription 
         urlPath = _urlPath;
@@ -42,11 +76,6 @@ class AlpacaPipeline : public IDataPipeline, public IAsyncPublisher {
         websocket = new Poco::Net::WebSocket(*session,request,response);
     //std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl; // check websocket creation status
     };
-    void notifyAll(std::shared_ptr<IStreamData> data){ // work in progress send them the buffer? also must filter so subs only get data for symbols they want
-        for (auto &&i : subscribers){
-            i.first->notify(data);
-        }
-    };
     virtual void sendRequest(){ // resend request when subs sub to new symbol
         Poco::Net::HTTPRequest request("GET", urlPath);
         request.add("APCA-API-KEY-ID",apiKey);
@@ -64,7 +93,7 @@ class AlpacaPipeline : public IDataPipeline, public IAsyncPublisher {
         websocket->sendFrame(payload.c_str(),payload.length(),flags);
     //std::cout << payload << std::endl;
     };
-    virtual void subscribeToDataStream(std::string symbol, ISubscriber* subscriber){ // allow subscribers to specify the symbol of data to receive
+    virtual void subscribeToDataStream(std::string symbol, IDataPipelineSubscriber* subscriber){ // allow subscribers to specify the symbol of data to receive
         auto sub = subscribers.find(subscriber);
         if(sub != subscribers.end()){
             for (auto &&i : sub->second){
@@ -82,12 +111,12 @@ class AlpacaPipeline : public IDataPipeline, public IAsyncPublisher {
             sendRequest(); // resend request with updated symbol list
         } // else fails quitely...
     };
-    virtual void subscribe(ISubscriber* subscriber){
+    virtual void subscribe(IDataPipelineSubscriber* subscriber){
         if(subscribers.find(subscriber) == subscribers.end()){
             subscribers.emplace(subscriber,std::vector<std::string>());
         }
     };
-    virtual void unSubscribe(ISubscriber* subscriber){
+    virtual void unSubscribe(IDataPipelineSubscriber* subscriber){
         for (auto i = subscribers.begin(); i != subscribers.end(); i++){
             if(i->first == subscriber){
                 subscribers.erase(i);
@@ -148,10 +177,10 @@ class AlpacaPipeline : public IDataPipeline, public IAsyncPublisher {
             }
         }
     };
-    virtual void start(){
-        running = true;
-        thread = std::thread(&AlpacaPipeline::loop, this);
-    };
+    // virtual void start(){
+    //     running = true;
+    //     thread = std::thread(&AlpacaPipeline::loop, this);
+    // };
     ~AlpacaPipeline(){
         stop();
     }
