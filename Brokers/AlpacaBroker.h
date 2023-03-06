@@ -6,7 +6,6 @@
 #include "Poco/Net/HTTPResponse.h"
 #include "Poco/StreamCopier.h"
 #include "Poco/JSON/Object.h"
-#include "AlpacaPipeline.h"
 
 #include <string>
 using std::string;

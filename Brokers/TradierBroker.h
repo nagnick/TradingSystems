@@ -1,14 +1,13 @@
 #pragma once
 #include "JSONFileParser.h"
 #include "IBroker.h"
-#include "TradierPipeline.h"
 #include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
 #include "Poco/Net/HTTPResponse.h"
 #include "Poco/StreamCopier.h"
 #include "Poco/JSON/Object.h"
 #include "Poco/JSON/Parser.h"
-#include "IAsyncPublisher.h"
+
 #include <string>
 using std::string;
 // can trade stocks and options. no crypto 

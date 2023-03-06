@@ -40,10 +40,14 @@ conan_cmake_install(PATH_OR_REFERENCE .
 #include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 #conan_basic_setup(TARGETS)
 
-add_compile_options(-Wall -Wextra -pedantic -pthread) # -pthread
 add_executable(main 
     Main.cpp
     )
+# must go first to bellow has an existing traget
+add_subdirectory(Brokers)
+add_subdirectory(Streams)
+
+add_compile_options(-Wall -Wextra -pedantic -pthread) # -pthread
 
 target_include_directories (main PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(main 

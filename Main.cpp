@@ -1,12 +1,12 @@
-#include <iostream>
-#include "TradierBroker.h"
-#include "TradierPipeline.h"
-#include "HTTPSClient.h"
-#include "PrintSubscriber.h"
+
+#include "Brokers/TradierBroker.h"
+#include "Brokers/AlpacaBroker.h"
+#include "Streams/TradierPipeline.h"
+#include "Streams/AlpacaPipeline.h"
+#include "Streams/PrintSubscriber.h"
 #include "JSONFileParser.h"
-#include "TradingSystemsComponentFactory.h"
-#include "AlpacaBroker.h"
 #include <csignal>
+#include <iostream>
 
 std::atomic_bool run = true;
 void signalHandler(int i ){
