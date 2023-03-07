@@ -1,8 +1,8 @@
 #pragma once 
-#include "IDataPipeline.h"
-#include "IAsyncPublisher.h"
+#include "IDataStream.h"
+#include "helpers/IAsync.h"
 #include "StreamData.h"
-#include "JSONFileParser.h"
+#include "helpers/JSONFileParser.h"
 
 #include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
@@ -15,17 +15,17 @@
 #include <vector>
 #include <map>
 
-class AlpacaPipeline : public IDataPipeline, public IAsyncPublisher {
+class AlpacaStream : public IDataStream, public IAsync {
     std::string url, apiKey, apiSecretKey, urlPath;
     int port;
     char* buffer = new char[10000];
 
     Poco::Net::HTTPSClientSession* session = nullptr;
     Poco::Net::WebSocket* websocket = nullptr;
-    std::map<IDataPipelineSubscriber*, std::vector<std::string>> subscribers;
+    std::map<IDataStreamSubscriber*, std::vector<std::string>> subscribers;
     std::vector<std::string> symbols;
 
-    bool subscribedTo(IDataPipelineSubscriber * sub ,std::string symbol){// checks if sub is subscribed to symbol
+    bool subscribedTo(IDataStreamSubscriber * sub ,std::string symbol){// checks if sub is subscribed to symbol
         std::vector<std::string> subedSymbols = subscribers.at(sub);
         for (auto &&i : subedSymbols){
             if(i == symbol){
@@ -59,7 +59,7 @@ class AlpacaPipeline : public IDataPipeline, public IAsyncPublisher {
     };
 
     public:
-    AlpacaPipeline(JSONFileParser& file, std::string  accountJSONKey, std::string _urlPath, int _port){  // pathUrl = /v2/{source} iex or sip to {source} iex is all you get without paying for subscription 
+    AlpacaStream(JSONFileParser& file, std::string  accountJSONKey, std::string _urlPath, int _port){  // pathUrl = /v2/{source} iex or sip to {source} iex is all you get without paying for subscription 
         urlPath = _urlPath;
         port = _port;
         url = file.getSubObjectValue(accountJSONKey,"WSURL");
@@ -93,7 +93,7 @@ class AlpacaPipeline : public IDataPipeline, public IAsyncPublisher {
         websocket->sendFrame(payload.c_str(),payload.length(),flags);
     //std::cout << payload << std::endl;
     };
-    virtual void subscribeToDataStream(std::string symbol, IDataPipelineSubscriber* subscriber){ // allow subscribers to specify the symbol of data to receive
+    virtual void subscribeToDataStream(std::string symbol, IDataStreamSubscriber* subscriber){ // allow subscribers to specify the symbol of data to receive
         auto sub = subscribers.find(subscriber);
         if(sub != subscribers.end()){
             for (auto &&i : sub->second){
@@ -111,12 +111,12 @@ class AlpacaPipeline : public IDataPipeline, public IAsyncPublisher {
             sendRequest(); // resend request with updated symbol list
         } // else fails quitely...
     };
-    virtual void subscribe(IDataPipelineSubscriber* subscriber){
+    virtual void subscribe(IDataStreamSubscriber* subscriber){
         if(subscribers.find(subscriber) == subscribers.end()){
             subscribers.emplace(subscriber,std::vector<std::string>());
         }
     };
-    virtual void unSubscribe(IDataPipelineSubscriber* subscriber){
+    virtual void unSubscribe(IDataStreamSubscriber* subscriber){
         for (auto i = subscribers.begin(); i != subscribers.end(); i++){
             if(i->first == subscriber){
                 subscribers.erase(i);
@@ -181,7 +181,7 @@ class AlpacaPipeline : public IDataPipeline, public IAsyncPublisher {
     //     running = true;
     //     thread = std::thread(&AlpacaPipeline::loop, this);
     // };
-    ~AlpacaPipeline(){
+    ~AlpacaStream(){
         stop();
     }
 };

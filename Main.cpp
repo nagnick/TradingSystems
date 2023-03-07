@@ -1,10 +1,10 @@
 
 #include "Brokers/TradierBroker.h"
 #include "Brokers/AlpacaBroker.h"
-#include "Streams/TradierPipeline.h"
-#include "Streams/AlpacaPipeline.h"
+#include "Streams/TradierStream.h"
+#include "Streams/AlpacaStream.h"
 #include "Streams/PrintSubscriber.h"
-#include "JSONFileParser.h"
+#include "helpers/JSONFileParser.h"
 #include <csignal>
 #include <iostream>
 
@@ -23,9 +23,9 @@ int main(){
     AlpacaBroker brokerA(file, "alpaca");
     //broker2.getBalances();
     PrintSubscriber sub;
-    AlpacaPipeline* pipeA = new AlpacaPipeline(file,"alpaca", "/v2/iex", 443);
+    AlpacaStream* pipeA = new AlpacaStream(file,"alpaca", "/v2/iex", 443);
     std::string sessionId = brokerT.getWebsocketSessionId();
-    TradierPipeline* pipeT = new TradierPipeline(file,"tradierReal", sessionId, "/v1/markets/events", 443);
+    TradierStream* pipeT = new TradierStream(file,"tradierReal", sessionId, "/v1/markets/events", 443);
     pipeA->start();
     pipeA->subscribe(&sub);
     pipeA->subscribeToDataStream("SPY",&sub);

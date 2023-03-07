@@ -1,7 +1,7 @@
 #pragma once
-#include "IDataPipeline.h"
-#include "IAsyncPublisher.h"
-#include "JSONFileParser.h"
+#include "IDataStream.h"
+#include "helpers/IAsync.h"
+#include "helpers/JSONFileParser.h"
 #include "StreamData.h"
 
 #include "Poco/Net/HTTPSClientSession.h"
@@ -13,15 +13,15 @@
 #include <vector>
 #include <map>
 
-class TradierPipeline: public IDataPipeline, public IAsyncPublisher{
+class TradierStream: public IDataStream, public IAsync{
     std::string url, sessionId, authScheme, apiKey, urlPath;
     int port;
     char* buffer = new char[10000];
     Poco::Net::HTTPSClientSession* session = nullptr;
     Poco::Net::WebSocket* websocket = nullptr;
-    std::map<IDataPipelineSubscriber*, std::vector<std::string>> subscribers;
+    std::map<IDataStreamSubscriber*, std::vector<std::string>> subscribers;
     std::vector<std::string> symbols;
-    bool subscribedTo(IDataPipelineSubscriber * sub ,std::string symbol){// checks if sub is subscribed to symbol
+    bool subscribedTo(IDataStreamSubscriber * sub ,std::string symbol){// checks if sub is subscribed to symbol
         std::vector<std::string> subedSymbols = subscribers.at(sub);
         for (auto &&i : subedSymbols){
             if(i == symbol){
@@ -55,7 +55,7 @@ class TradierPipeline: public IDataPipeline, public IAsyncPublisher{
     };
 
     public:
-    TradierPipeline(JSONFileParser& file, std::string  accountJSONKey, std::string _sessionId, std::string _urlPath, int _port){ // urlPath = "/v1/markets/events"
+    TradierStream(JSONFileParser& file, std::string  accountJSONKey, std::string _sessionId, std::string _urlPath, int _port){ // urlPath = "/v1/markets/events"
         sessionId = _sessionId;
         urlPath = _urlPath;
         port = _port;
@@ -144,11 +144,11 @@ class TradierPipeline: public IDataPipeline, public IAsyncPublisher{
     //     running = true;
     //     thread = std::thread(&TradierPipeline::loop, this);
     // }
-    // virtual void subscribeToDataStream(std::string stream, IDataPipelineSubscriber* subscriber){// allow subscribers to specify the stream of data of their symbols to receive 
+    // virtual void subscribeToDataStream(std::string stream, IDataStreamSubscriber* subscriber){// allow subscribers to specify the stream of data of their symbols to receive 
     //     //filter : trade,quote,summary,timesale,tradex default is all
     //     // not implemented yet. maybe overkill on the granularity of the subscribe maybe best to leave it to subscriber to filter out themselves..
     // };
-    virtual void subscribeToDataStream(std::string symbol, IDataPipelineSubscriber* subscriber){// allow subscribers to specify the symbol of data to receive
+    virtual void subscribeToDataStream(std::string symbol, IDataStreamSubscriber* subscriber){// allow subscribers to specify the symbol of data to receive
         auto sub = subscribers.find(subscriber);
         if(sub != subscribers.end()){
             for (auto &&i : sub->second){
@@ -166,19 +166,19 @@ class TradierPipeline: public IDataPipeline, public IAsyncPublisher{
             sendRequest(); // resend request with updated symbol list
         } // else fails quitely...
     }; 
-    virtual void subscribe(IDataPipelineSubscriber* subscriber){ // done
+    virtual void subscribe(IDataStreamSubscriber* subscriber){ // done
         if(subscribers.find(subscriber) == subscribers.end()){
             subscribers.emplace(subscriber,std::vector<std::string>());
         }
     };
-    virtual void unSubscribe(IDataPipelineSubscriber* subscriber){ // done
+    virtual void unSubscribe(IDataStreamSubscriber* subscriber){ // done
         for (auto i = subscribers.begin(); i != subscribers.end(); i++){
             if(i->first == subscriber){
                 subscribers.erase(i);
             }
         }  
     };
-    virtual ~TradierPipeline(){
+    virtual ~TradierStream(){
         stop();
     };
 };
