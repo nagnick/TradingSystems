@@ -93,49 +93,51 @@ class TradierStream: public IDataStream, public IAsync{
         int flags =  0;
         while(running){// a spinning polling loop
             int length = websocket->receiveFrame((void*)buffer,10000,flags);
-            buffer[length] = '\0'; // add nullterminator to end of string to prevent grabage at end
-        //std::cout << "whole chunk:"<<buffer << "\nParts:" <<  std::endl;
+            if (length > 0){ // skip for empty frames
+                buffer[length] = '\0'; // add nullterminator to end of string to prevent grabage at end
+            //std::cout << "whole chunk:"<<buffer << "\nParts:" <<  std::endl;
 
-            std::stringstream ss(buffer);
-            std::string output;
-            Poco::JSON::Parser parser;
-            Poco::Dynamic::Var result;
-            Poco::JSON::Object::Ptr object;
-            //parse into different data types
-            while(std::getline(ss,output,'\n')){ // each json object split by newline in tradier by default
-        //std::cout << output <<std::endl;
+                std::stringstream ss(buffer);
+                std::string output;
+                Poco::JSON::Parser parser;
+                Poco::Dynamic::Var result;
+                Poco::JSON::Object::Ptr object;
+                //parse into different data types
+                while(std::getline(ss,output,'\n')){ // each json object split by newline in tradier by default
+            //std::cout << output <<std::endl;
 
-                result =parser.parse(output);
-                object = result.extract<Poco::JSON::Object::Ptr>();
-                std::string type = object->get("type").toString();
-                if(type == "trade"){
-                    std::string symbol, exchangeCode, price, tradeSize, time;
-                    symbol = object->get("symbol").toString();
-                    exchangeCode = object->get("exch").toString();
-                    price = object->get("price").toString();
-                    tradeSize = object->get("size").toString();
-                    time = object->get("date").toString();
-                    // last price "last" and cumulative volume "cvol" are not captured as alpaca doesn't have those
-                    notifyAll(std::shared_ptr<TradeData>(new TradeData(symbol,exchangeCode,price,tradeSize,time)));
-                }
-                else if(type == "quote"){
-                    std::string symbol, bidPrice, bidSize, bidExchange, bidTime, askPrice, askSize, askExchange, askTime; 
-                    symbol = object->get("symbol").toString();
-                    bidPrice = object->get("bid").toString();
-                    bidSize = object->get("bidsz").toString();
-                    bidExchange = object->get("bidexch").toString();
-                    bidTime = object->get("biddate").toString();
-                    askPrice = object->get("ask").toString();
-                    askSize = object->get("asksz").toString();
-                    askExchange = object->get("askexch").toString();
-                    askTime = object->get("askdate").toString();
-                    // all parts of quote are captured
-                    notifyAll(std::shared_ptr<QuoteData>(new QuoteData(symbol,bidPrice,bidSize,bidExchange,bidTime,askPrice,askSize,askExchange,askTime)));
-                }
-                else{
-                    //give the data in an other data object 
-                    notifyAll(std::shared_ptr<OtherData>(new OtherData(output)));  // trash until I find use for these other data feeds i get for free from pipeline
-                    // output may have more data then it should but it will give the object all the data to rep the unprocessed JSON object
+                    result =parser.parse(output);
+                    object = result.extract<Poco::JSON::Object::Ptr>();
+                    std::string type = object->get("type").toString();
+                    if(type == "trade"){
+                        std::string symbol, exchangeCode, price, tradeSize, time;
+                        symbol = object->get("symbol").toString();
+                        exchangeCode = object->get("exch").toString();
+                        price = object->get("price").toString();
+                        tradeSize = object->get("size").toString();
+                        time = object->get("date").toString();
+                        // last price "last" and cumulative volume "cvol" are not captured as alpaca doesn't have those
+                        notifyAll(std::shared_ptr<TradeData>(new TradeData(symbol,exchangeCode,price,tradeSize,time)));
+                    }
+                    else if(type == "quote"){
+                        std::string symbol, bidPrice, bidSize, bidExchange, bidTime, askPrice, askSize, askExchange, askTime; 
+                        symbol = object->get("symbol").toString();
+                        bidPrice = object->get("bid").toString();
+                        bidSize = object->get("bidsz").toString();
+                        bidExchange = object->get("bidexch").toString();
+                        bidTime = object->get("biddate").toString();
+                        askPrice = object->get("ask").toString();
+                        askSize = object->get("asksz").toString();
+                        askExchange = object->get("askexch").toString();
+                        askTime = object->get("askdate").toString();
+                        // all parts of quote are captured
+                        notifyAll(std::shared_ptr<QuoteData>(new QuoteData(symbol,bidPrice,bidSize,bidExchange,bidTime,askPrice,askSize,askExchange,askTime)));
+                    }
+                    else{
+                        //give the data in an other data object 
+                        notifyAll(std::shared_ptr<OtherData>(new OtherData(output)));  // trash until I find use for these other data feeds i get for free from pipeline
+                        // output may have more data then it should but it will give the object all the data to rep the unprocessed JSON object
+                    }
                 }
             }
         }
