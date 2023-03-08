@@ -1,6 +1,8 @@
 #pragma once
 #include "helpers/JSONFileParser.h"
 #include "IBroker.h"
+#include "BrokerResponse.h"
+
 #include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
 #include "Poco/Net/HTTPResponse.h"
