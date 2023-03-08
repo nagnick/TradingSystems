@@ -21,8 +21,8 @@ int main(){
     JSONFileParser file("/mnt/c/Users/nicol/Desktop/TradingSystems/broker.cfg");
     TradierBroker brokerT(file,"tradierPaper");
     AlpacaBroker brokerA(file, "alpacaPaper");
-    brokerA.placeEquityOrder("AAPL","sell","10","market","day","NULL","NULL");
-
+    OrderResponse res = brokerA.placeEquityOrder("AAPL","buy","10","market","day","NULL","NULL");
+    std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
     //broker2.getBalances();
     // PrintSubscriber sub;
     // AlpacaStream* pipeA = new AlpacaStream(file,"alpacaReal", "/v2/iex", 443);

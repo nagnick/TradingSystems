@@ -63,7 +63,7 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         std::istream& s = session->receiveResponse(response);
         std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
         int length = response.getContentLength();
-        std::cout << length << std::endl;
+    //std::cout << length << std::endl;
         std::stringstream buffer;
         buffer << s.rdbuf();
         Poco::JSON::Parser parser;
@@ -92,7 +92,7 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
             //set("trail_percent","NULL").set("trail_price","NULL");  might have to add these fields later for more complex orders
             Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONResponse("POST", "/v2/orders",obj);
             std::cout << result->get("id").toString() << std::endl;
-            return OrderResponse("ID","status");
+            return OrderResponse(result->get("id").toString(),result->get("status").toString());
     }
     void placeOrder(string symbol, string qty, string notional, string side, string type,
      string time_in_force, string limit_price, string stop_price, string trail_price,
