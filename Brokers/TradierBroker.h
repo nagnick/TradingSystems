@@ -1,7 +1,6 @@
 #pragma once
 #include "helpers/JSONFileParser.h"
 #include "IBroker.h"
-#include "BrokerResponse.h"
 
 #include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
@@ -63,6 +62,23 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         request.setContentLength(ss.str().size());
         request.setContentType("application/json");
         request.add("Accept","application/json" ); // required by tradier does not read content Type field.
+
+        //Test order
+        // request.add("account_id", accountId);
+        // request.add("class", "equity");
+        // request.add("symbol","SPY");
+        // request.add("side", "buy");
+        // request.add("quantity","10");
+        // request.add("type","market");
+        // request.add("duration","day"); // minimum for order to work
+        // request.add("price","1.00");
+        // request.add("stop","1.00");
+        // request.add("tag","hello");
+
+
+
+
+
         request.setCredentials(authScheme, apiKey);
         std::ostream& o = session->sendRequest(request);
         json.stringify(o);  // write json to ostream of request
@@ -71,13 +87,15 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         std::istream& s = session->receiveResponse(response);
         std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
         int length = response.getContentLength();
-        std::cout << length << std::endl;
+    //std::cout << length << std::endl;
+    std::cout<< s.rdbuf() << std::endl;
         std::stringstream buffer;
         buffer << s.rdbuf();
         Poco::JSON::Parser parser;
         Poco::Dynamic::Var result = parser.parse(buffer.str());
-        // use pointers to avoid copying
-        return  result.extract<Poco::JSON::Object::Ptr>();
+        return  result.extract<Poco::JSON::Object::Ptr>(); // maybe fix to avoid copying result? // use pointers to avoid copying by .extract<actualType>()
+        // // use pointers to avoid copying
+        // return  result.extract<Poco::JSON::Object::Ptr>();
     };
     // user methods DONE
     void getUserInfo(){
@@ -98,18 +116,31 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         return test.extract<Poco::JSON::Object::Ptr>()->get("sessionid").toString();
     };
     // order methods WIP missing replace/modify order and some special kinds of orders
-    virtual void placeEquityOrder(string symbol, string side, string quantity, string type,
+    virtual OrderResponse placeEquityOrder(string symbol, string side, string quantity, string type,
         string duration, string price, string stop){
             // everything from price on is optional
-        sendRequestAndReturnString("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "equity").set("symbol",symbol).set(
-            "side", side).set("quantity",quantity).set("type",type).set("duration",duration).set("price",price).set("stop",stop));
+        Poco::JSON::Object obj;
+        obj.set("class", "equity").set("symbol",symbol).set("side", side).set("quantity",quantity).set("type",type).set("duration",duration); // minimum for order to work
+        // if(price != "NULL" && price != ""){
+        //     obj.set("price",price);
+        // }
+        // if(stop != "NULL" && price != ""){
+        //     obj.set("stop",stop);
+        // }
+        // obj.set("price","1.00");
+        // obj.set("stop","1.00");
+        // obj.set("tag","hello");
+        //obj.set("account_id", accountId);
+        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONResponse("POST","/v1/accounts/"+ accountId +"/orders",obj);
+        //std::cout << result << std::endl;
+        return OrderResponse(" ", " ");//OrderResponse(result->getObject("order")->get("id").toString(),result->get("status").toString());
     }
-    virtual void placeEquityOrder(string symbol, string side, string quantity, string type,
-        string duration, string price, string stop, string tag){
-            // everything from price on is optional
-        sendRequestAndReturnString("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "equity").set("symbol",symbol).set(
-            "side", side).set("quantity",quantity).set("type",type).set("duration",duration).set("price",price).set("stop",stop).set("tag",tag));
-    }
+    // virtual void placeEquityOrder(string symbol, string side, string quantity, string type,
+    //     string duration, string price, string stop, string tag){
+    //         // everything from price on is optional
+    //     sendRequestAndReturnString("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "equity").set("symbol",symbol).set(
+    //         "side", side).set("quantity",quantity).set("type",type).set("duration",duration).set("price",price).set("stop",stop).set("tag",tag));
+    // }
     virtual void placeOptionOrder(string symbol, string option_symbol, string side, string quantity, string type,
         string duration, string price, string stop, string tag){
             // everything from price on is optional
