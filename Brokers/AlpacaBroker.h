@@ -1,7 +1,6 @@
 #pragma once
 #include "helpers/JSONFileParser.h"
 #include "IBroker.h"
-#include "BrokerResponse.h"
 
 #include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
@@ -69,8 +68,7 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         buffer << s.rdbuf();
         Poco::JSON::Parser parser;
         Poco::Dynamic::Var result = parser.parse(buffer.str());
-        // use pointers to avoid copying
-        return  result.extract<Poco::JSON::Object::Ptr>();
+        return  result.extract<Poco::JSON::Object::Ptr>(); // maybe fix to avoid copying result? // use pointers to avoid copying by .extract<actualType>()
     };
     // account methods DONE
     void getAccount(){
@@ -81,10 +79,20 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         sendRequestAndReturnString("GET", "/v2/orders", Poco::JSON::Object());
         // default order query more options may be specified
     };
-    virtual void placeEquityOrder(string symbol, string side, string qty, string type,
+    virtual OrderResponse placeEquityOrder(string symbol, string side, string qty, string type,
         string duration, string price, string stop){
-            sendRequestAndReturnString("POST", "/v2/orders", Poco::JSON::Object().set("symbol", symbol).set("qty",qty).set("side",side).set(
-            "type",type).set("time_in_force",duration).set("limit_price",price).set("stop_price",stop)); 
+            Poco::JSON::Object obj;
+            obj.set("symbol", symbol).set("qty",qty).set("side",side).set("type",type).set("time_in_force",duration); // minimum for order to work
+            if(price != "NULL" && price != ""){
+                obj.set("limit_price",price);
+            }
+            if(stop != "NULL" && price != ""){
+                obj.set("stop_price",stop);
+            }
+            //set("trail_percent","NULL").set("trail_price","NULL");  might have to add these fields later for more complex orders
+            Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONResponse("POST", "/v2/orders",obj);
+            std::cout << result->get("id").toString() << std::endl;
+            return OrderResponse("ID","status");
     }
     void placeOrder(string symbol, string qty, string notional, string side, string type,
      string time_in_force, string limit_price, string stop_price, string trail_price,
