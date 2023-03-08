@@ -8,6 +8,7 @@
 #include "Poco/StreamCopier.h"
 #include "Poco/JSON/Object.h"
 #include "Poco/JSON/Parser.h"
+#include "Poco/URI.h"
 
 #include <string>
 using std::string;
@@ -34,12 +35,12 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         request.setKeepAlive(true);
         std::stringstream ss;
         json.stringify(ss);
-        request.setContentLength(ss.str().size());
-        request.setContentType("application/json");
-        request.add("Accept","application/json" ); // required by tradier does not read content Type field.
+        request.setContentLength(0);
+        //request.setContentType("application/json");
+        request.add("Accept","application/json"); // required by tradier does not read content Type field.
         request.setCredentials(authScheme, apiKey);
         std::ostream& o = session->sendRequest(request);
-        json.stringify(o);  // write json to ostream of request
+        json.stringify(o);
         //get response
         Poco::Net::HTTPResponse response;
         std::istream& s = session->receiveResponse(response);
@@ -59,8 +60,8 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         request.setKeepAlive(true);
         std::stringstream ss;
         json.stringify(ss);
-        request.setContentLength(ss.str().size());
-        request.setContentType("application/json");
+        request.setContentLength(0);
+        //request.setContentType("application/json"); // to work must not have this and content length of 0
         request.add("Accept","application/json" ); // required by tradier does not read content Type field.
 
         //Test order
@@ -74,10 +75,6 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         // request.add("price","1.00");
         // request.add("stop","1.00");
         // request.add("tag","hello");
-
-
-
-
 
         request.setCredentials(authScheme, apiKey);
         std::ostream& o = session->sendRequest(request);
@@ -120,7 +117,8 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         string duration, string price, string stop){
             // everything from price on is optional
         Poco::JSON::Object obj;
-        obj.set("class", "equity").set("symbol",symbol).set("side", side).set("quantity",quantity).set("type",type).set("duration",duration); // minimum for order to work
+        //obj.set("class", "equity");
+        //obj.set("symbol",symbol).set("side", side).set("quantity",quantity).set("type",type).set("duration",duration); // minimum for order to work
         // if(price != "NULL" && price != ""){
         //     obj.set("price",price);
         // }
@@ -128,10 +126,26 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         //     obj.set("stop",stop);
         // }
         // obj.set("price","1.00");
-        // obj.set("stop","1.00");
-        // obj.set("tag","hello");
+         //obj.set("stop","1.00");
+         //obj.set("tag","my-tag-example-1");
+         //obj.stringify(std::cout);
         //obj.set("account_id", accountId);
-        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONResponse("POST","/v1/accounts/"+ accountId +"/orders",obj);
+        //Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONResponse("POST","/v1/accounts/"+ accountId +"/orders",obj);
+        //Test order
+        Poco::URI uri;
+        uri.setPath("/v1/accounts/"+ accountId +"/orders");
+        //uri.addQueryParameter("account_id", accountId);
+        uri.addQueryParameter("class", "equity");
+        uri.addQueryParameter("symbol","SPY");
+        uri.addQueryParameter("side", "buy");
+        uri.addQueryParameter("quantity","10");
+        uri.addQueryParameter("type","market");
+        uri.addQueryParameter("duration","gtc"); // minimum for order to work
+        uri.addQueryParameter("price","1.00");
+        uri.addQueryParameter("stop","1.00");
+        uri.addQueryParameter("tag","hello");
+        std::cout << uri.getPathAndQuery();
+        std::cout << sendRequestAndReturnString("POST",uri.getPathAndQuery(),obj);//"/v1/accounts/"+ accountId +"/orders" path
         //std::cout << result << std::endl;
         return OrderResponse(" ", " ");//OrderResponse(result->getObject("order")->get("id").toString(),result->get("status").toString());
     }
