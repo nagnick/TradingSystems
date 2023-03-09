@@ -29,85 +29,61 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         //thread = std::thread(&TradierBroker::start, this); // if i figure out how to do async https responses then inherite from IAsyncPublisher
         // thread = std::thread(&TradierBroker::start, std::ref(*this));
     };
-    std::string sendRequestAndReturnString(string method, string urlPath, Poco::JSON::Object json){
+    std::string sendRequestAndReturnString(string method, string urlPath){
         Poco::Net::HTTPRequest request(method, urlPath);
         //request.setHost(urlExtension, port);
         request.setKeepAlive(true);
-        std::stringstream ss;
-        json.stringify(ss);
         request.setContentLength(0);
         //request.setContentType("application/json");
         request.add("Accept","application/json"); // required by tradier does not read content Type field.
         request.setCredentials(authScheme, apiKey);
-        std::ostream& o = session->sendRequest(request);
-        json.stringify(o);
+        session->sendRequest(request);
         //get response
         Poco::Net::HTTPResponse response;
         std::istream& s = session->receiveResponse(response);
         std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
         int length = response.getContentLength();
-        std::cout << length << std::endl;
         char* text = new char[length];
         s.getline(text,length);
-        //std::cout << text << std::endl;
         std::string res(text);
         delete[] text;
         return res;
     };
-    Poco::JSON::Object::Ptr sendRequestAndReturnJSONResponse(string method, string urlPath, Poco::JSON::Object json){
+    Poco::JSON::Object::Ptr sendRequestAndReturnJSONResponse(string method, string urlPath){
         Poco::Net::HTTPRequest request(method, urlPath);
         //request.setHost(urlExtension, port);
         request.setKeepAlive(true);
-        std::stringstream ss;
-        json.stringify(ss);
         request.setContentLength(0);
         //request.setContentType("application/json"); // to work must not have this and content length of 0
         request.add("Accept","application/json" ); // required by tradier does not read content Type field.
-
-        //Test order
-        // request.add("account_id", accountId);
-        // request.add("class", "equity");
-        // request.add("symbol","SPY");
-        // request.add("side", "buy");
-        // request.add("quantity","10");
-        // request.add("type","market");
-        // request.add("duration","day"); // minimum for order to work
-        // request.add("price","1.00");
-        // request.add("stop","1.00");
-        // request.add("tag","hello");
-
         request.setCredentials(authScheme, apiKey);
-        std::ostream& o = session->sendRequest(request);
-        json.stringify(o);  // write json to ostream of request
+        session->sendRequest(request);
         //get response
         Poco::Net::HTTPResponse response;
         std::istream& s = session->receiveResponse(response);
         std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
         int length = response.getContentLength();
-    //std::cout << length << std::endl;
-    std::cout<< s.rdbuf() << std::endl;
         std::stringstream buffer;
         buffer << s.rdbuf();
         Poco::JSON::Parser parser;
+    //std::cout<< buffer.str() << std::endl;
         Poco::Dynamic::Var result = parser.parse(buffer.str());
-        return  result.extract<Poco::JSON::Object::Ptr>(); // maybe fix to avoid copying result? // use pointers to avoid copying by .extract<actualType>()
-        // // use pointers to avoid copying
-        // return  result.extract<Poco::JSON::Object::Ptr>();
+        return  result.extract<Poco::JSON::Object::Ptr>(); // maybe make another version to return json arry ptr???
     };
     // user methods DONE
     void getUserInfo(){
-        sendRequestAndReturnString("GET","/v1/user/profile",Poco::JSON::Object());
+        sendRequestAndReturnString("GET","/v1/user/profile");
     }
     // balance methods DONE
     void getBalances(){
-        sendRequestAndReturnString("GET","/v1/accounts/" + accountId + "/balances",Poco::JSON::Object());
+        sendRequestAndReturnString("GET","/v1/accounts/" + accountId + "/balances");
     };
     // position methods DONE
     virtual void getAllPositions(){
-        sendRequestAndReturnString("GET", "/v1/accounts/"+ accountId + "/positions",Poco::JSON::Object());
+        sendRequestAndReturnString("GET", "/v1/accounts/"+ accountId + "/positions");
     };
     virtual std::string getWebsocketSessionId(){ // need to retreive session Id to then pass to websocket(AKA TradierPipeline)
-        Poco::JSON::Object::Ptr obj = sendRequestAndReturnJSONResponse("POST","/v1/markets/events/session", Poco::JSON::Object());
+        Poco::JSON::Object::Ptr obj = sendRequestAndReturnJSONResponse("POST","/v1/markets/events/session");
         Poco::Dynamic::Var test = obj->get("stream");
         //std::cout << test.extract<Poco::JSON::Object::Ptr>()->get("sessionid").toString() << test.extract<Poco::JSON::Object::Ptr>()->get("url").toString() << std::endl;
         return test.extract<Poco::JSON::Object::Ptr>()->get("sessionid").toString();
@@ -116,57 +92,62 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
     virtual OrderResponse placeEquityOrder(string symbol, string side, string quantity, string type,
         string duration, string price, string stop){
             // everything from price on is optional
-        Poco::JSON::Object obj;
-        //obj.set("class", "equity");
-        //obj.set("symbol",symbol).set("side", side).set("quantity",quantity).set("type",type).set("duration",duration); // minimum for order to work
-        // if(price != "NULL" && price != ""){
-        //     obj.set("price",price);
-        // }
-        // if(stop != "NULL" && price != ""){
-        //     obj.set("stop",stop);
-        // }
-        // obj.set("price","1.00");
-         //obj.set("stop","1.00");
-         //obj.set("tag","my-tag-example-1");
-         //obj.stringify(std::cout);
-        //obj.set("account_id", accountId);
-        //Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONResponse("POST","/v1/accounts/"+ accountId +"/orders",obj);
-        //Test order
         Poco::URI uri;
         uri.setPath("/v1/accounts/"+ accountId +"/orders");
-        //uri.addQueryParameter("account_id", accountId);
         uri.addQueryParameter("class", "equity");
-        uri.addQueryParameter("symbol","SPY");
-        uri.addQueryParameter("side", "buy");
-        uri.addQueryParameter("quantity","10");
-        uri.addQueryParameter("type","market");
-        uri.addQueryParameter("duration","gtc"); // minimum for order to work
-        uri.addQueryParameter("price","1.00");
-        uri.addQueryParameter("stop","1.00");
-        uri.addQueryParameter("tag","hello");
-        std::cout << uri.getPathAndQuery();
-        std::cout << sendRequestAndReturnString("POST",uri.getPathAndQuery(),obj);//"/v1/accounts/"+ accountId +"/orders" path
-        //std::cout << result << std::endl;
-        return OrderResponse(" ", " ");//OrderResponse(result->getObject("order")->get("id").toString(),result->get("status").toString());
+        uri.addQueryParameter("symbol",symbol);
+        uri.addQueryParameter("side", side);
+        uri.addQueryParameter("quantity",quantity);
+        uri.addQueryParameter("type",type);
+        uri.addQueryParameter("duration",duration); // minimum for order to work
+        if(price != "NULL" && price != ""){
+            uri.addQueryParameter("price",price);
+        }
+        if(stop != "NULL" && stop != ""){
+            uri.addQueryParameter("stop",stop);
+        }
+        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONResponse("POST",uri.getPathAndQuery());//"/v1/accounts/"+ accountId +"/orders" path
+        Poco::Dynamic::Var test = result->get("order");
+        Poco::JSON::Object::Ptr subObject = test.extract<Poco::JSON::Object::Ptr>();
+        return OrderResponse(subObject->get("id").toString(), subObject->get("status").toString());
     }
-    // virtual void placeEquityOrder(string symbol, string side, string quantity, string type,
-    //     string duration, string price, string stop, string tag){
-    //         // everything from price on is optional
-    //     sendRequestAndReturnString("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "equity").set("symbol",symbol).set(
-    //         "side", side).set("quantity",quantity).set("type",type).set("duration",duration).set("price",price).set("stop",stop).set("tag",tag));
-    // }
+    virtual OrderResponse placeEquityOrder(string symbol, string side, string quantity, string type,
+        string duration, string price, string stop, string tag){
+            // everything from price on is optional
+        Poco::URI uri;
+        uri.setPath("/v1/accounts/"+ accountId +"/orders");
+        uri.addQueryParameter("class", "equity");
+        uri.addQueryParameter("symbol",symbol);
+        uri.addQueryParameter("side", side);
+        uri.addQueryParameter("quantity",quantity);
+        uri.addQueryParameter("type",type);
+        uri.addQueryParameter("duration",duration); // minimum for order to work
+        if(price != "NULL" && price != ""){
+            uri.addQueryParameter("price",price);
+        }
+        if(stop != "NULL" && stop != ""){
+            uri.addQueryParameter("stop",stop);
+        }
+        if(tag != "NULL" && tag != ""){
+           uri.addQueryParameter("tag",tag);
+        }
+        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONResponse("POST",uri.getPathAndQuery());//"/v1/accounts/"+ accountId +"/orders" path
+        Poco::Dynamic::Var test = result->get("order");
+        Poco::JSON::Object::Ptr subObject = test.extract<Poco::JSON::Object::Ptr>();
+        return OrderResponse(subObject->get("id").toString(), subObject->get("status").toString());
+    }
     virtual void placeOptionOrder(string symbol, string option_symbol, string side, string quantity, string type,
         string duration, string price, string stop, string tag){
             // everything from price on is optional
-        sendRequestAndReturnString("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "option").set("symbol",symbol).set(
-            "option_symbol",option_symbol).set("side", side).set("quantity",quantity).set("type",type).set("duration",duration).set("price",price).set(
-                "stop",stop).set("tag",tag));
+        // sendRequestAndReturnString("POST","/v1/accounts/"+ accountId +"/orders",Poco::JSON::Object().set("class", "option").set("symbol",symbol).set(
+        //     "option_symbol",option_symbol).set("side", side).set("quantity",quantity).set("type",type).set("duration",duration).set("price",price).set(
+        //         "stop",stop).set("tag",tag));
     }
     virtual void cancelOrderByOrderId(string order_id){
-        sendRequestAndReturnString("DELETE", "/v1/accounts/"+ accountId + "/orders/" + order_id, Poco::JSON::Object());
+        sendRequestAndReturnString("DELETE", "/v1/accounts/"+ accountId + "/orders/" + order_id);
     };
     virtual void getClock(){ // serves the current market timestamp, whether or not the market is currently open, as well as the times of the next market open and close.
-        sendRequestAndReturnString("GET", "/v1/markets/clock", Poco::JSON::Object());
+        sendRequestAndReturnString("GET", "/v1/markets/clock");
     }; 
     // missing could be added: ALL marketData methods(leave for data pipeline websocket?), Watchlist, gain/loss, and History methods
 
