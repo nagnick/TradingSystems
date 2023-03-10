@@ -92,6 +92,23 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         Poco::Dynamic::Var result = parser.parse(buffer.str());
         return  result.extract<Poco::JSON::Array::Ptr>();
     };
+    int sendRequestAndReturnStatus(string method, string urlPath, Poco::JSON::Object json){ // final version
+        Poco::Net::HTTPRequest request(method, urlPath);
+        request.setKeepAlive(true);
+        std::stringstream ss;
+        json.stringify(ss);
+        request.setContentLength(ss.str().size());
+        request.setContentType("application/json");
+        request.add("APCA-API-KEY-ID",key);
+        request.add("APCA-API-SECRET-KEY",secretKey);
+        std::ostream& o = session->sendRequest(request);
+        json.stringify(o);
+        //get response
+        Poco::Net::HTTPResponse response;
+        session->receiveResponse(response);
+        //std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
+        return response.getStatus();
+    };
     // account methods DONE
     void getAccount(){
         sendRequestAndReturnString("GET" ,"/v2/account",Poco::JSON::Object());
@@ -102,7 +119,7 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         // default order query more options may be specified
     };
     virtual OrderResponse placeEquityOrder(string symbol, string side, string qty, string type,
-        string duration, string price, string stop){
+        string duration, string price, string stop){ //DONE
             Poco::JSON::Object obj;
             obj.set("symbol", symbol).set("qty",qty).set("side",side).set("type",type).set("time_in_force",duration); // minimum for order to work
             if(price != "NULL" && price != ""){
@@ -136,11 +153,17 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
     void cancelAllOrders(){
         sendRequestAndReturnString("DELETE", "/v2/orders",Poco::JSON::Object());
     };
-    void cancelOrderByOrderId(string order_id){
-        sendRequestAndReturnString("DELETE", "/v2/orders/" + order_id, Poco::JSON::Object());
+    OrderResponse cancelOrderByOrderId(string order_id){
+        int status = sendRequestAndReturnStatus("DELETE", "/v2/orders/" + order_id, Poco::JSON::Object());
+        if(status == 204){
+            return OrderResponse(order_id,"ok");
+        }
+        else{
+            return OrderResponse(order_id,"rejected");
+        }
     };
     // position methods DONE
-    virtual std::vector<PositionResponse> getAllPositions(){
+    virtual std::vector<PositionResponse> getAllPositions(){ //DONE
         std::vector<PositionResponse> result;
         Poco::JSON::Array::Ptr array = sendRequestAndReturnJSONArray("GET", "/v2/positions", Poco::JSON::Object());
         for(std::size_t i = 0; i < array->size(); i++){ // go through each json object in array

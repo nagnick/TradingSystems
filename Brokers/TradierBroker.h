@@ -100,7 +100,7 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         sendRequestAndReturnString("GET","/v1/accounts/" + accountId + "/balances");
     };
     // position methods DONE
-    virtual std::vector<PositionResponse> getAllPositions(){
+    virtual std::vector<PositionResponse> getAllPositions(){ //DONE
         std::vector<PositionResponse> result;
         Poco::JSON::Object::Ptr obj = sendRequestAndReturnJSONObject("GET", "/v1/accounts/"+ accountId + "/positions");
         Poco::JSON::Object::Ptr positions = obj->getObject("positions");
@@ -131,7 +131,7 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
     };
     // order methods WIP missing replace/modify order and some special kinds of orders
     virtual OrderResponse placeEquityOrder(string symbol, string side, string quantity, string type,
-        string duration, string price, string stop){
+        string duration, string price, string stop){ //DONE
             // everything from price on is optional
         Poco::URI uri;
         uri.setPath("/v1/accounts/"+ accountId +"/orders");
@@ -184,8 +184,11 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         //     "option_symbol",option_symbol).set("side", side).set("quantity",quantity).set("type",type).set("duration",duration).set("price",price).set(
         //         "stop",stop).set("tag",tag));
     }
-    virtual void cancelOrderByOrderId(string order_id){
-        sendRequestAndReturnString("DELETE", "/v1/accounts/"+ accountId + "/orders/" + order_id);
+    virtual OrderResponse cancelOrderByOrderId(string order_id){
+        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject("DELETE", "/v1/accounts/"+ accountId + "/orders/" + order_id);
+        Poco::Dynamic::Var test = result->get("order");
+        Poco::JSON::Object::Ptr subObject = test.extract<Poco::JSON::Object::Ptr>();
+        return OrderResponse(subObject->get("id").toString(), subObject->get("status").toString());
     };
     virtual void getClock(){ // serves the current market timestamp, whether or not the market is currently open, as well as the times of the next market open and close.
         sendRequestAndReturnString("GET", "/v1/markets/clock");

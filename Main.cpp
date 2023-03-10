@@ -22,12 +22,12 @@ int main(){
     TradierBroker brokerT(file,"tradierPaper");
     AlpacaBroker brokerA(file, "alpacaPaper");
     //brokerT.getBalances();
-    std::vector<PositionResponse> result = brokerT.getAllPositions();
+    std::vector<PositionResponse> result = brokerA.getAllPositions();
     std::cout << result.size() << std::endl;
     //OrderResponse res = brokerA.placeEquityOrder("AAPL","buy","10","market","day","NULL","NULL");
     //std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
-OrderResponse res = brokerT.placeEquityOrder("AAPL","sell","10","market","day","NULL","NULL");
-std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
+//OrderResponse res = brokerT.placeEquityOrder("AAPL","sell","10","market","day","NULL","NULL");
+//std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
 result = brokerT.getAllPositions();
 std::cout << result.size() << std::endl;
     //broker2.getBalances();
