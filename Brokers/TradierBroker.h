@@ -29,7 +29,7 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         //thread = std::thread(&TradierBroker::start, this); // if i figure out how to do async https responses then inherite from IAsyncPublisher
         // thread = std::thread(&TradierBroker::start, std::ref(*this));
     };
-    std::string sendRequestAndReturnString(string method, string urlPath){
+    std::string sendRequestAndReturnString(string method, string urlPath){ // for testing/debug
         Poco::Net::HTTPRequest request(method, urlPath);
         //request.setHost(urlExtension, port);
         request.setKeepAlive(true);
@@ -42,14 +42,14 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         Poco::Net::HTTPResponse response;
         std::istream& s = session->receiveResponse(response);
         std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
-        int length = response.getContentLength();
+        int length = response.getContentLength();//should I add 1 for nullterminator?
         char* text = new char[length];
         s.getline(text,length);
         std::string res(text);
         delete[] text;
         return res;
     };
-    Poco::JSON::Object::Ptr sendRequestAndReturnJSONResponse(string method, string urlPath){
+    Poco::JSON::Object::Ptr sendRequestAndReturnJSONObject(string method, string urlPath){ // final version
         Poco::Net::HTTPRequest request(method, urlPath);
         //request.setHost(urlExtension, port);
         request.setKeepAlive(true);
@@ -68,8 +68,29 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         Poco::JSON::Parser parser;
     //std::cout<< buffer.str() << std::endl;
         Poco::Dynamic::Var result = parser.parse(buffer.str());
-        return  result.extract<Poco::JSON::Object::Ptr>(); // maybe make another version to return json arry ptr???
+        return  result.extract<Poco::JSON::Object::Ptr>();
     };
+    // Poco::JSON::Array::Ptr sendRequestAndReturnJSONArray(string method, string urlPath){ // not required tradier puts arrays in object so only need object version
+    //     Poco::Net::HTTPRequest request(method, urlPath);
+    //     //request.setHost(urlExtension, port);
+    //     request.setKeepAlive(true);
+    //     request.setContentLength(0);
+    //     //request.setContentType("application/json"); // to work must not have this and content length of 0
+    //     request.add("Accept","application/json" ); // required by tradier does not read content Type field.
+    //     request.setCredentials(authScheme, apiKey);
+    //     session->sendRequest(request);
+    //     //get response
+    //     Poco::Net::HTTPResponse response;
+    //     std::istream& s = session->receiveResponse(response);
+    //     std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
+    //     int length = response.getContentLength();
+    //     std::stringstream buffer;
+    //     buffer << s.rdbuf();
+    //     Poco::JSON::Parser parser;
+    // std::cout<< buffer.str() << std::endl;
+    //     Poco::Dynamic::Var result = parser.parse(buffer.str());
+    //     return  result.extract<Poco::JSON::Array::Ptr>();
+    // };
     // user methods DONE
     void getUserInfo(){
         sendRequestAndReturnString("GET","/v1/user/profile");
@@ -79,11 +100,31 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         sendRequestAndReturnString("GET","/v1/accounts/" + accountId + "/balances");
     };
     // position methods DONE
-    virtual void getAllPositions(){
-        sendRequestAndReturnString("GET", "/v1/accounts/"+ accountId + "/positions");
+    virtual std::vector<PositionResponse> getAllPositions(){
+        std::vector<PositionResponse> result;
+        Poco::JSON::Object::Ptr obj = sendRequestAndReturnJSONObject("GET", "/v1/accounts/"+ accountId + "/positions");
+        Poco::JSON::Object::Ptr positions = obj->getObject("positions");
+        if(positions){ // if nullptr then no positions return empty vector
+            Poco::Dynamic::Var position = positions->get("position"); // if one is single object else is an array
+            if(position.isArray()){
+                Poco::JSON::Array::Ptr array = position.extract<Poco::JSON::Array::Ptr>();
+                for(std::size_t i = 0; i < array->size(); i++){ // go through each json object in array
+                        Poco::JSON::Object::Ptr object = array->getObject(i);
+                        result.push_back(PositionResponse(object->get("symbol").toString(),object->get("quantity").toString(),
+                        object->get("cost_basis").toString(),object->get("id").toString()));
+                }
+            }
+            else{
+                Poco::JSON::Object::Ptr object = position.extract<Poco::JSON::Object::Ptr>();
+                result.push_back(PositionResponse(object->get("symbol").toString(),object->get("quantity").toString(),
+                        object->get("cost_basis").toString(),object->get("id").toString()));
+            }
+        }
+        return result;
+
     };
     virtual std::string getWebsocketSessionId(){ // need to retreive session Id to then pass to websocket(AKA TradierPipeline)
-        Poco::JSON::Object::Ptr obj = sendRequestAndReturnJSONResponse("POST","/v1/markets/events/session");
+        Poco::JSON::Object::Ptr obj = sendRequestAndReturnJSONObject("POST","/v1/markets/events/session");
         Poco::Dynamic::Var test = obj->get("stream");
         //std::cout << test.extract<Poco::JSON::Object::Ptr>()->get("sessionid").toString() << test.extract<Poco::JSON::Object::Ptr>()->get("url").toString() << std::endl;
         return test.extract<Poco::JSON::Object::Ptr>()->get("sessionid").toString();
@@ -106,7 +147,7 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         if(stop != "NULL" && stop != ""){
             uri.addQueryParameter("stop",stop);
         }
-        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONResponse("POST",uri.getPathAndQuery());//"/v1/accounts/"+ accountId +"/orders" path
+        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject("POST",uri.getPathAndQuery());//"/v1/accounts/"+ accountId +"/orders" path
         Poco::Dynamic::Var test = result->get("order");
         Poco::JSON::Object::Ptr subObject = test.extract<Poco::JSON::Object::Ptr>();
         return OrderResponse(subObject->get("id").toString(), subObject->get("status").toString());
@@ -131,7 +172,7 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         if(tag != "NULL" && tag != ""){
            uri.addQueryParameter("tag",tag);
         }
-        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONResponse("POST",uri.getPathAndQuery());//"/v1/accounts/"+ accountId +"/orders" path
+        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject("POST",uri.getPathAndQuery());//"/v1/accounts/"+ accountId +"/orders" path
         Poco::Dynamic::Var test = result->get("order");
         Poco::JSON::Object::Ptr subObject = test.extract<Poco::JSON::Object::Ptr>();
         return OrderResponse(subObject->get("id").toString(), subObject->get("status").toString());
