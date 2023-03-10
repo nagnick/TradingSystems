@@ -30,7 +30,7 @@ int main(){
 //std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
 result = brokerT.getAllPositions();
 std::cout << result.size() << std::endl;
-OrderResponse res = brokerA.cancelOrderByOrderId("5718856");
+OrderResponse res = brokerT.cancelOrderByOrderId("5718856");
 std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
     //broker2.getBalances();
     // PrintSubscriber sub;
