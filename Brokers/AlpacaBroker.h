@@ -23,7 +23,7 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         session = new Poco::Net::HTTPSClientSession(url , port);
         session->setKeepAlive(true);
     };
-    std::string sendRequestAndReturnString(std::string method, std::string urlPath, Poco::JSON::Object json){
+    std::string sendRequestAndReturnString(std::string method, std::string urlPath, Poco::JSON::Object json){ // for debug/testing
         Poco::Net::HTTPRequest request(method, urlPath);
         request.setKeepAlive(true);
         std::stringstream ss;
@@ -39,14 +39,14 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         Poco::Net::HTTPResponse response;
         std::istream& s = session->receiveResponse(response);
         std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
-        int length = response.getContentLength();
+        int length = response.getContentLength()+1; // plus one for null terminator?
         char* text = new char[length];
         s.getline(text,length);
         std::string res(text);
         delete[] text;
         return res;
     };
-    Poco::JSON::Object::Ptr sendRequestAndReturnJSONResponse(string method, string urlPath, Poco::JSON::Object json){
+    Poco::JSON::Object::Ptr sendRequestAndReturnJSONObject(string method, string urlPath, Poco::JSON::Object json){ // final version
         Poco::Net::HTTPRequest request(method, urlPath);
         request.setKeepAlive(true);
         std::stringstream ss;
@@ -64,9 +64,33 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         int length = response.getContentLength();
         std::stringstream buffer;
         buffer << s.rdbuf();
+    //std::cout<< buffer.str() << std::endl;
         Poco::JSON::Parser parser;
         Poco::Dynamic::Var result = parser.parse(buffer.str());
-        return  result.extract<Poco::JSON::Object::Ptr>(); // maybe fix to avoid copying result? // use pointers to avoid copying by .extract<actualType>()
+        return  result.extract<Poco::JSON::Object::Ptr>();
+    };
+    Poco::JSON::Array::Ptr sendRequestAndReturnJSONArray(string method, string urlPath, Poco::JSON::Object json){ // final version
+        Poco::Net::HTTPRequest request(method, urlPath);
+        request.setKeepAlive(true);
+        std::stringstream ss;
+        json.stringify(ss);
+        request.setContentLength(ss.str().size());
+        request.setContentType("application/json");
+        request.add("APCA-API-KEY-ID",key);
+        request.add("APCA-API-SECRET-KEY",secretKey);
+        std::ostream& o = session->sendRequest(request);
+        json.stringify(o);
+        //get response
+        Poco::Net::HTTPResponse response;
+        std::istream& s = session->receiveResponse(response);
+        std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
+        int length = response.getContentLength();
+        std::stringstream buffer;
+        buffer << s.rdbuf();
+    //std::cout<< buffer.str() << std::endl;
+        Poco::JSON::Parser parser;
+        Poco::Dynamic::Var result = parser.parse(buffer.str());
+        return  result.extract<Poco::JSON::Array::Ptr>();
     };
     // account methods DONE
     void getAccount(){
@@ -88,7 +112,7 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
                 obj.set("stop_price",stop);
             }
             //set("trail_percent","NULL").set("trail_price","NULL");  might have to add these fields later for more complex orders
-            Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONResponse("POST", "/v2/orders",obj);
+            Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject("POST", "/v2/orders",obj);
         //std::cout << result->get("id").toString() << std::endl;
             return OrderResponse(result->get("id").toString(),result->get("status").toString());
     }
@@ -116,8 +140,15 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         sendRequestAndReturnString("DELETE", "/v2/orders/" + order_id, Poco::JSON::Object());
     };
     // position methods DONE
-    virtual void getAllPositions(){
-        sendRequestAndReturnString("GET", "/v2/positions", Poco::JSON::Object());
+    virtual std::vector<PositionResponse> getAllPositions(){
+        std::vector<PositionResponse> result;
+        Poco::JSON::Array::Ptr array = sendRequestAndReturnJSONArray("GET", "/v2/positions", Poco::JSON::Object());
+        for(std::size_t i = 0; i < array->size(); i++){ // go through each json object in array
+                Poco::JSON::Object::Ptr object = array->getObject(i);
+                result.push_back(PositionResponse(object->get("symbol").toString(),object->get("qty").toString(),
+                object->get("cost_basis").toString(),object->get("asset_id").toString()));
+        }
+        return result;
     };
     void getPositionBySymbol(string symbol){
         sendRequestAndReturnString("GET", "/v2/positions/" + symbol, Poco::JSON::Object());
