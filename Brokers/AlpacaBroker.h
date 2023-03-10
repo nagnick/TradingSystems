@@ -153,7 +153,8 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
     void cancelAllOrders(){
         sendRequestAndReturnString("DELETE", "/v2/orders",Poco::JSON::Object());
     };
-    OrderResponse cancelOrderByOrderId(string order_id){
+    OrderResponse cancelOrderByOrderId(string order_id){ // DONE
+        // this call only returns a status code
         int status = sendRequestAndReturnStatus("DELETE", "/v2/orders/" + order_id, Poco::JSON::Object());
         if(status == 204){
             return OrderResponse(order_id,"ok");
