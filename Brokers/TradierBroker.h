@@ -66,7 +66,7 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         std::stringstream buffer;
         buffer << s.rdbuf();
         Poco::JSON::Parser parser;
-    //std::cout<< buffer.str() << std::endl;
+    std::cout<< buffer.str() << std::endl;
         Poco::Dynamic::Var result = parser.parse(buffer.str());
         return  result.extract<Poco::JSON::Object::Ptr>();
     };
@@ -184,8 +184,10 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         //     "option_symbol",option_symbol).set("side", side).set("quantity",quantity).set("type",type).set("duration",duration).set("price",price).set(
         //         "stop",stop).set("tag",tag));
     }
-    virtual OrderResponse cancelOrderByOrderId(string order_id){
-        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject("DELETE", "/v1/accounts/"+ accountId + "/orders/" + order_id);
+    virtual OrderResponse cancelOrderByOrderId(string order_id){ // works but errors with nonJson reponse... so fix to check status first(might be good to do that for all JSONobject reposnes)
+         Poco::URI uri;
+        uri.setPath("/v1/accounts/"+ accountId + "/orders/" + order_id);
+        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject("DELETE", uri.getPathAndQuery());
         Poco::Dynamic::Var test = result->get("order");
         Poco::JSON::Object::Ptr subObject = test.extract<Poco::JSON::Object::Ptr>();
         return OrderResponse(subObject->get("id").toString(), subObject->get("status").toString());
