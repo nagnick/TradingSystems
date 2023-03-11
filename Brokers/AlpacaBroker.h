@@ -110,8 +110,10 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         return response.getStatus();
     };
     // account methods DONE
-    void getAccount(){
-        sendRequestAndReturnString("GET" ,"/v2/account",Poco::JSON::Object());
+    virtual BalanceResponse getBalance(){ // get account returns balance info
+        Poco::JSON::Object::Ptr ptr = sendRequestAndReturnJSONObject("GET" ,"/v2/account",Poco::JSON::Object());
+        return BalanceResponse(ptr->get("cash").toString(),ptr->get("buying_power").toString());
+        //std::cout << sendRequestAndReturnString("GET" ,"/v2/account",Poco::JSON::Object())<< std::endl;
     };
     // order methods WIP missing replace/modify order and placeOrder needs clean up or splitting up....
     void getOrder(){

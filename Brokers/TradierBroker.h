@@ -100,8 +100,11 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         sendRequestAndReturnString("GET","/v1/user/profile");
     }
     // balance methods DONE
-    void getBalances(){
-        sendRequestAndReturnString("GET","/v1/accounts/" + accountId + "/balances");
+    virtual BalanceResponse getBalance(){
+       // std::cout<< sendRequestAndReturnString("GET","/v1/accounts/" + accountId + "/balances") << std::endl;
+        Poco::JSON::Object::Ptr ptr = sendRequestAndReturnJSONObject("GET","/v1/accounts/" + accountId + "/balances");
+        Poco::JSON::Object::Ptr obj = ptr->getObject("balances");
+        return BalanceResponse(obj->get("total_cash").toString(),obj->get("total_cash").toString()); // fix when account type is different ex: margin vs cash account they will vary
     };
     // position methods DONE
     virtual std::vector<PositionResponse> getAllPositions(){ //DONE

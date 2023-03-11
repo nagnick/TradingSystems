@@ -3,7 +3,7 @@
 
 struct IBrokerResponse{
     virtual int getResponseType()=0;
-    // 0 = OrderResponse; 1 = PositionResponse;
+    // 0 = OrderResponse; 1 = PositionResponse; 2 = BalanceResponse;
     ~IBrokerResponse(){};
 };
 struct OrderResponse: public IBrokerResponse{
@@ -23,4 +23,12 @@ struct PositionResponse: public IBrokerResponse{
         return 1;
     };
     ~PositionResponse(){};
+};
+struct BalanceResponse: public IBrokerResponse{
+    std::string cash, buying_power;
+    BalanceResponse(std::string _cash, std::string _buying_power):cash(_cash),buying_power(_buying_power){};
+    virtual int getResponseType(){
+        return 2;
+    };
+    ~BalanceResponse(){};
 };
