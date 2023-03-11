@@ -12,7 +12,7 @@ class IBroker{ // classes that inherite this interface are solely for sending tr
     virtual OrderResponse cancelOrderByOrderId(string order_id) = 0; //DONE
     virtual OrderResponse placeEquityOrder(string symbol, string side, string quantity, string type,
         string duration, string price, string stop)=0;  //DONE
-    virtual BalanceResponse getBalance() = 0;
-    virtual void getClock() = 0;
+    virtual BalanceResponse getBalance() = 0; // DONE
+    virtual ClockResponse getClock() = 0; // DONE
     virtual ~IBroker(){};
     };

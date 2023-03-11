@@ -42,7 +42,7 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         Poco::Net::HTTPResponse response;
         std::istream& s = session->receiveResponse(response);
         std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
-        int length = response.getContentLength();//should I add 1 for nullterminator?
+        int length = response.getContentLength() + 1;//should I add 1 for nullterminator?
         char* text = new char[length];
         s.getline(text,length);
         std::string res(text);
@@ -204,8 +204,12 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
             return OrderResponse(order_id,"rejected");
         }
     };
-    virtual void getClock(){ // serves the current market timestamp, whether or not the market is currently open, as well as the times of the next market open and close.
-        sendRequestAndReturnString("GET", "/v1/markets/clock");
+    virtual ClockResponse getClock(){ // serves the current market timestamp, whether or not the market is currently open, as well as the times of the next market open and close.
+        Poco::JSON::Object::Ptr ptr = sendRequestAndReturnJSONObject("GET", "/v1/markets/clock");//->stringify(std::cout);
+        ptr = ptr->getObject("clock");
+        std::string timestamp = ptr->get("date").toString() + "T" + ptr->get("timestamp").toString(); // need to do proper time stamp conversion to match Alpaca
+        bool is_open = ptr->get("state").toString() == "open";
+        return ClockResponse(timestamp,is_open);
     }; 
     // missing could be added: ALL marketData methods(leave for data pipeline websocket?), Watchlist, gain/loss, and History methods
 

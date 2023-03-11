@@ -3,7 +3,7 @@
 
 struct IBrokerResponse{
     virtual int getResponseType()=0;
-    // 0 = OrderResponse; 1 = PositionResponse; 2 = BalanceResponse;
+    // 0 = OrderResponse; 1 = PositionResponse; 2 = BalanceResponse; 3 = ClockResponse;
     ~IBrokerResponse(){};
 };
 struct OrderResponse: public IBrokerResponse{
@@ -31,4 +31,13 @@ struct BalanceResponse: public IBrokerResponse{
         return 2;
     };
     ~BalanceResponse(){};
+};
+struct ClockResponse: public IBrokerResponse{
+    std::string timestamp;
+    bool is_open;
+    ClockResponse(std::string _timestamp, bool _is_open):timestamp(_timestamp),is_open(_is_open){};
+    virtual int getResponseType(){
+        return 3;
+    };
+    ~ClockResponse(){};
 };

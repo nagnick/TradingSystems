@@ -209,8 +209,9 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         sendRequestAndReturnString("GET", "/v2/assets/" + symbol_or_asset_id, Poco::JSON::Object());
     };
     // clock methods DONE
-    virtual void getClock(){ // serves the current market timestamp, whether or not the market is currently open, as well as the times of the next market open and close.
-        sendRequestAndReturnString("GET", "/v2/clock", Poco::JSON::Object());
+    virtual ClockResponse getClock(){ // serves the current market timestamp, whether or not the market is currently open, as well as the times of the next market open and close.
+        Poco::JSON::Object::Ptr ptr = sendRequestAndReturnJSONObject("GET", "/v2/clock", Poco::JSON::Object()); // ->stringify(std::cout)
+        return ClockResponse(ptr->get("timestamp").toString(),ptr->get("is_open").convert<bool>());
     };
     // missing could be added: Watchlist, Calendar, Corporate Actions Announcements, Account Configurations, Account Activities, and Portfolio History methods
 };
