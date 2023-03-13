@@ -46,7 +46,7 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         delete[] text;
         return res;
     };
-    Poco::JSON::Object::Ptr sendRequestAndReturnJSONObject(string method, string urlPath, Poco::JSON::Object json){ // final version
+    Poco::JSON::Object::Ptr sendRequestAndReturnJSONObject(int& status, string method, string urlPath, Poco::JSON::Object json){ // final version
         Poco::Net::HTTPRequest request(method, urlPath);
         request.setKeepAlive(true);
         std::stringstream ss;
@@ -60,68 +60,80 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         //get response
         Poco::Net::HTTPResponse response;
         std::istream& s = session->receiveResponse(response);
-        std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
-        int length = response.getContentLength();
-        std::stringstream buffer;
-        buffer << s.rdbuf();
-    //std::cout<< buffer.str() << std::endl;
-        Poco::JSON::Parser parser;
-        Poco::Dynamic::Var result = parser.parse(buffer.str());
-        return  result.extract<Poco::JSON::Object::Ptr>();
-    };
-    Poco::JSON::Array::Ptr sendRequestAndReturnJSONArray(string method, string urlPath, Poco::JSON::Object json){ // final version
-        Poco::Net::HTTPRequest request(method, urlPath);
-        request.setKeepAlive(true);
-        std::stringstream ss;
-        json.stringify(ss);
-        request.setContentLength(ss.str().size());
-        request.setContentType("application/json");
-        request.add("APCA-API-KEY-ID",key);
-        request.add("APCA-API-SECRET-KEY",secretKey);
-        std::ostream& o = session->sendRequest(request);
-        json.stringify(o);
-        //get response
-        Poco::Net::HTTPResponse response;
-        std::istream& s = session->receiveResponse(response);
-        std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
-        int length = response.getContentLength();
-        std::stringstream buffer;
-        buffer << s.rdbuf();
-    //std::cout<< buffer.str() << std::endl;
-        Poco::JSON::Parser parser;
-        Poco::Dynamic::Var result = parser.parse(buffer.str());
-        return  result.extract<Poco::JSON::Array::Ptr>();
-    };
-    int sendRequestAndReturnStatus(string method, string urlPath, Poco::JSON::Object json){ // final version
-        Poco::Net::HTTPRequest request(method, urlPath);
-        request.setKeepAlive(true);
-        std::stringstream ss;
-        json.stringify(ss);
-        request.setContentLength(ss.str().size());
-        request.setContentType("application/json");
-        request.add("APCA-API-KEY-ID",key);
-        request.add("APCA-API-SECRET-KEY",secretKey);
-        std::ostream& o = session->sendRequest(request);
-        json.stringify(o);
-        //get response
-        Poco::Net::HTTPResponse response;
-        session->receiveResponse(response);
         //std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
-        return response.getStatus();
+        status = response.getStatus();
+        if(status == 200){ // valid responses are 200 and contian valis json responses that can be parsed
+            int length = response.getContentLength();
+            std::stringstream buffer;
+            buffer << s.rdbuf();
+        //std::cout<< buffer.str() << std::endl;
+            Poco::JSON::Parser parser;
+            Poco::Dynamic::Var result = parser.parse(buffer.str());
+            return  result.extract<Poco::JSON::Object::Ptr>();
+        }
+        return nullptr;
     };
+    Poco::JSON::Array::Ptr sendRequestAndReturnJSONArray(int& status, string method, string urlPath, Poco::JSON::Object json){ // final version
+        Poco::Net::HTTPRequest request(method, urlPath);
+        request.setKeepAlive(true);
+        std::stringstream ss;
+        json.stringify(ss);
+        request.setContentLength(ss.str().size());
+        request.setContentType("application/json");
+        request.add("APCA-API-KEY-ID",key);
+        request.add("APCA-API-SECRET-KEY",secretKey);
+        std::ostream& o = session->sendRequest(request);
+        json.stringify(o);
+        //get response
+        Poco::Net::HTTPResponse response;
+        std::istream& s = session->receiveResponse(response);
+        //std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
+        status = response.getStatus();
+        if(status == 200){ // valid responses are 200 contian valis json responses that can be parsed
+            int length = response.getContentLength();
+            std::stringstream buffer;
+            buffer << s.rdbuf();
+        //std::cout<< buffer.str() << std::endl;
+            Poco::JSON::Parser parser;
+            Poco::Dynamic::Var result = parser.parse(buffer.str());
+            return  result.extract<Poco::JSON::Array::Ptr>();
+        }
+        return nullptr;
+
+    };
+    // int sendRequestAndReturnStatus(string method, string urlPath, Poco::JSON::Object json){ // final version
+    //     Poco::Net::HTTPRequest request(method, urlPath);
+    //     request.setKeepAlive(true);
+    //     std::stringstream ss;
+    //     json.stringify(ss);
+    //     request.setContentLength(ss.str().size());
+    //     request.setContentType("application/json");
+    //     request.add("APCA-API-KEY-ID",key);
+    //     request.add("APCA-API-SECRET-KEY",secretKey);
+    //     std::ostream& o = session->sendRequest(request);
+    //     json.stringify(o);
+    //     //get response
+    //     Poco::Net::HTTPResponse response;
+    //     session->receiveResponse(response);
+    //     //std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
+    //     return response.getStatus();
+    // };
     // account methods DONE
     virtual BalanceResponse getBalance(){ // get account returns balance info
-        Poco::JSON::Object::Ptr ptr = sendRequestAndReturnJSONObject("GET" ,"/v2/account",Poco::JSON::Object());
+        int status = 0;
+        Poco::JSON::Object::Ptr ptr = sendRequestAndReturnJSONObject(status,"GET" ,"/v2/account",Poco::JSON::Object());
         return BalanceResponse(ptr->get("cash").toString(),ptr->get("buying_power").toString());
         //std::cout << sendRequestAndReturnString("GET" ,"/v2/account",Poco::JSON::Object())<< std::endl;
     };
     // order methods WIP missing replace/modify order and placeOrder needs clean up or splitting up....
     void getOrder(){
+        int status = 0;
         sendRequestAndReturnString("GET", "/v2/orders", Poco::JSON::Object());
         // default order query more options may be specified
     };
     virtual OrderResponse placeEquityOrder(string symbol, string side, string qty, string type,
         string duration, string price, string stop){ //DONE
+            int status = 0;
             Poco::JSON::Object obj;
             obj.set("symbol", symbol).set("qty",qty).set("side",side).set("type",type).set("time_in_force",duration); // minimum for order to work
             if(price != "NULL" && price != ""){
@@ -131,7 +143,7 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
                 obj.set("stop_price",stop);
             }
             //set("trail_percent","NULL").set("trail_price","NULL");  might have to add these fields later for more complex orders
-            Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject("POST", "/v2/orders",obj);
+            Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject(status,"POST", "/v2/orders",obj);
         //std::cout << result->get("id").toString() << std::endl;
             return OrderResponse(result->get("id").toString(),result->get("status").toString());
     }
@@ -140,6 +152,7 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
      string trail_percent, string extended_hours, string client_order_id, string order_class,
      string take_profit, string stop_loss){ // https://alpaca.markets/docs/api-references/trading-api/orders/
      // from extended_hours on the fields are optional
+        int status = 0;
         sendRequestAndReturnString("POST", "/v2/orders", Poco::JSON::Object().set("symbol", symbol).set("notional",notional).set("qty",qty).set("side",side).set(
             "type",type).set("time_in_force",time_in_force).set("limit_price",limit_price).set("stop_price",stop_price).set("trail_price",trail_price).set(
                 "trail_percent",trail_percent).set("extended_hours",extended_hours).set("client_order_id",client_order_id).set("order_class",order_class).set(
@@ -147,28 +160,36 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         ); 
     };
     void getOrderByOrderId(string order_id){
+        int status = 0;
         sendRequestAndReturnString("GET", "/v2/orders/"+order_id, Poco::JSON::Object());
     }
     void getOrderByClientOrderId(string client_order_id){
+        int status = 0;
         sendRequestAndReturnString("GET", "/v2/orders:by_client_order_id", Poco::JSON::Object().set("client_order_id", client_order_id));
     };
     void cancelAllOrders(){
+        int status = 0;
         sendRequestAndReturnString("DELETE", "/v2/orders",Poco::JSON::Object());
     };
     OrderResponse cancelOrderByOrderId(string order_id){ // DONE
-        // this call only returns a status code
-        int status = sendRequestAndReturnStatus("DELETE", "/v2/orders/" + order_id, Poco::JSON::Object());
+        // this call only returns a status code no json body....
+        int status = 0;
+        sendRequestAndReturnJSONObject(status,"DELETE", "/v2/orders/" + order_id, Poco::JSON::Object());
         if(status == 204){
             return OrderResponse(order_id,"ok");
         }
+        if(status == 404){
+            return OrderResponse(order_id,"Order Id not found");
+        }
         else{
-            return OrderResponse(order_id,"rejected");
+            return OrderResponse(order_id,"Unprocessable/rejected");
         }
     };
     // position methods DONE
     virtual std::vector<PositionResponse> getAllPositions(){ //DONE
+        int status = 0;
         std::vector<PositionResponse> result;
-        Poco::JSON::Array::Ptr array = sendRequestAndReturnJSONArray("GET", "/v2/positions", Poco::JSON::Object());
+        Poco::JSON::Array::Ptr array = sendRequestAndReturnJSONArray(status,"GET", "/v2/positions", Poco::JSON::Object());
         for(std::size_t i = 0; i < array->size(); i++){ // go through each json object in array
                 Poco::JSON::Object::Ptr object = array->getObject(i);
                 result.push_back(PositionResponse(object->get("symbol").toString(),object->get("qty").toString(),
@@ -177,22 +198,28 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         return result;
     };
     void getPositionBySymbol(string symbol){
+        int status = 0;
         sendRequestAndReturnString("GET", "/v2/positions/" + symbol, Poco::JSON::Object());
     };
     void closeAllPositions(bool cancel_orders){ //If true is specified, cancel all open orders before liquidating all positions.
+        int status = 0;
         sendRequestAndReturnString("DELETE", "/v2/positions",Poco::JSON::Object().set("cancel_orders", cancel_orders));
     };
     void closePosition(string symbolORasset_id){
+        int status = 0;
         sendRequestAndReturnString("DELETE", "/v2/positions/" + symbolORasset_id, Poco::JSON::Object());
     };
     void closePositionByQuantity(string symbolORasset_id, double qty){
+        int status = 0;
         sendRequestAndReturnString("DELETE", "/v2/positions/" + symbolORasset_id, Poco::JSON::Object().set("qty", qty));
     };
     void closePositionByPercentage(string symbol_or_asset_id, double percentage){
+        int status = 0;
         sendRequestAndReturnString("DELETE", "/v2/positions/" + symbol_or_asset_id, Poco::JSON::Object().set("percentage", percentage));
     };
     //asset methods (query for what you can trade on alpaca) DONE
     void getAsset(string status, string asset_class, string exchange){ // all are optional. optional = ""
+        //int status = 0; conflict in name
         Poco::JSON::Object obj;
         if(status != ""){
             obj.set("status", status); //e.g. “active”. By default, all statuses are included.
@@ -206,11 +233,13 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         sendRequestAndReturnString("GET", "/v2/assets", obj);
     };
     void getAsset(string symbol_or_asset_id){
+        int status = 0;
         sendRequestAndReturnString("GET", "/v2/assets/" + symbol_or_asset_id, Poco::JSON::Object());
     };
     // clock methods DONE
     virtual ClockResponse getClock(){ // serves the current market timestamp, whether or not the market is currently open, as well as the times of the next market open and close.
-        Poco::JSON::Object::Ptr ptr = sendRequestAndReturnJSONObject("GET", "/v2/clock", Poco::JSON::Object()); // ->stringify(std::cout)
+        int status = 0;
+        Poco::JSON::Object::Ptr ptr = sendRequestAndReturnJSONObject(status,"GET", "/v2/clock", Poco::JSON::Object()); // ->stringify(std::cout)
         return ClockResponse(ptr->get("timestamp").toString(),ptr->get("is_open").convert<bool>());
     };
     // missing could be added: Watchlist, Calendar, Corporate Actions Announcements, Account Configurations, Account Activities, and Portfolio History methods

@@ -5,8 +5,8 @@
 #include <vector>
 using std::string;
 class IBroker{ // classes that inherite this interface are solely for sending trades to market for execution
-    // results of trade are not sent back unless requested?
-    // should hold a map from orderID to hold order status 
+    // just a start;  these are all I should need to start making trading algorithms 
+    // the two brokers may still need formating in the responses to have them work the same
     public:
     virtual std::vector<PositionResponse> getAllPositions() = 0; // DONE
     virtual OrderResponse cancelOrderByOrderId(string order_id) = 0; //DONE
