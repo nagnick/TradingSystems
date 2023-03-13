@@ -29,9 +29,9 @@ int main(){
     // std::cout << "time: "<< temp.timestamp << " market is open: " << temp.is_open << std::endl; 
     // std::vector<PositionResponse> result = brokerA.getAllPositions();
     // std::cout << result.size() << std::endl;
-    // OrderResponse res = brokerA.placeEquityOrder("AAPL","buy","10","limit","day","100","NULL");
+    // OrderResponse res = brokerT.placeEquityOrder("AAPL","buy","10","limit","day","100","NULL");
     // std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
-    OrderResponse res = brokerA.cancelOrderByOrderId("101");
+    OrderResponse res = brokerT.cancelOrderByOrderId("5740682");
     std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
 //OrderResponse res = brokerT.placeEquityOrder("AAPL","sell","10","market","day","NULL","NULL");
 //std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;

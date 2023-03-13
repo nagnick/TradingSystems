@@ -49,7 +49,7 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         delete[] text;
         return res;
     };
-    Poco::JSON::Object::Ptr sendRequestAndReturnJSONObject(string method, string urlPath){ // final version
+    Poco::JSON::Object::Ptr sendRequestAndReturnJSONObject(int& status, string method, string urlPath){ // final version
         Poco::Net::HTTPRequest request(method, urlPath);
         //request.setHost(urlExtension, port);
         request.setKeepAlive(true);
@@ -61,9 +61,10 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         //get response
         Poco::Net::HTTPResponse response;
         std::istream& s = session->receiveResponse(response);
-        std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
+    //std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
+        status = response.getStatus();
         //int length = response.getContentLength();
-        if(response.getStatus() == 200){ // initial error handling return empty json object if error status returned
+        if(status == 200){ // initial error handling return empty json object if error status returned parse would throw exception with empty response
         // error handling should be improved
             std::stringstream buffer;
             buffer << s.rdbuf();
@@ -102,14 +103,16 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
     // balance methods DONE
     virtual BalanceResponse getBalance(){
        // std::cout<< sendRequestAndReturnString("GET","/v1/accounts/" + accountId + "/balances") << std::endl;
-        Poco::JSON::Object::Ptr ptr = sendRequestAndReturnJSONObject("GET","/v1/accounts/" + accountId + "/balances");
+        int status = 0;
+        Poco::JSON::Object::Ptr ptr = sendRequestAndReturnJSONObject(status, "GET","/v1/accounts/" + accountId + "/balances");
         Poco::JSON::Object::Ptr obj = ptr->getObject("balances");
         return BalanceResponse(obj->get("total_cash").toString(),obj->get("total_cash").toString()); // fix when account type is different ex: margin vs cash account they will vary
     };
     // position methods DONE
     virtual std::vector<PositionResponse> getAllPositions(){ //DONE
+        int status = 0;
         std::vector<PositionResponse> result;
-        Poco::JSON::Object::Ptr obj = sendRequestAndReturnJSONObject("GET", "/v1/accounts/"+ accountId + "/positions");
+        Poco::JSON::Object::Ptr obj = sendRequestAndReturnJSONObject(status,"GET", "/v1/accounts/"+ accountId + "/positions");
         Poco::JSON::Object::Ptr positions = obj->getObject("positions");
         if(positions){ // if nullptr then no positions return empty vector
             Poco::Dynamic::Var position = positions->get("position"); // if one is single object else is an array
@@ -131,7 +134,8 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
 
     };
     virtual std::string getWebsocketSessionId(){ // need to retreive session Id to then pass to websocket(AKA TradierPipeline)
-        Poco::JSON::Object::Ptr obj = sendRequestAndReturnJSONObject("POST","/v1/markets/events/session");
+        int status = 0;
+        Poco::JSON::Object::Ptr obj = sendRequestAndReturnJSONObject(status, "POST","/v1/markets/events/session");
         Poco::Dynamic::Var test = obj->get("stream");
         //std::cout << test.extract<Poco::JSON::Object::Ptr>()->get("sessionid").toString() << test.extract<Poco::JSON::Object::Ptr>()->get("url").toString() << std::endl;
         return test.extract<Poco::JSON::Object::Ptr>()->get("sessionid").toString();
@@ -140,6 +144,7 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
     virtual OrderResponse placeEquityOrder(string symbol, string side, string quantity, string type,
         string duration, string price, string stop){ //DONE
             // everything from price on is optional
+        int status = 0;
         Poco::URI uri;
         uri.setPath("/v1/accounts/"+ accountId +"/orders");
         uri.addQueryParameter("class", "equity");
@@ -154,7 +159,7 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         if(stop != "NULL" && stop != ""){
             uri.addQueryParameter("stop",stop);
         }
-        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject("POST",uri.getPathAndQuery());//"/v1/accounts/"+ accountId +"/orders" path
+        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject(status, "POST", uri.getPathAndQuery());//"/v1/accounts/"+ accountId +"/orders" path
         Poco::Dynamic::Var test = result->get("order");
         Poco::JSON::Object::Ptr subObject = test.extract<Poco::JSON::Object::Ptr>();
         return OrderResponse(subObject->get("id").toString(), subObject->get("status").toString());
@@ -162,6 +167,7 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
     virtual OrderResponse placeEquityOrder(string symbol, string side, string quantity, string type,
         string duration, string price, string stop, string tag){
             // everything from price on is optional
+        int status = 0;
         Poco::URI uri;
         uri.setPath("/v1/accounts/"+ accountId +"/orders");
         uri.addQueryParameter("class", "equity");
@@ -179,7 +185,7 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         if(tag != "NULL" && tag != ""){
            uri.addQueryParameter("tag",tag);
         }
-        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject("POST",uri.getPathAndQuery());//"/v1/accounts/"+ accountId +"/orders" path
+        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject(status,"POST",uri.getPathAndQuery());//"/v1/accounts/"+ accountId +"/orders" path
         Poco::Dynamic::Var test = result->get("order");
         Poco::JSON::Object::Ptr subObject = test.extract<Poco::JSON::Object::Ptr>();
         return OrderResponse(subObject->get("id").toString(), subObject->get("status").toString());
@@ -192,20 +198,26 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         //         "stop",stop).set("tag",tag));
     }
     virtual OrderResponse cancelOrderByOrderId(string order_id){ // Done
+        int status = 0;
         Poco::URI uri;
         uri.setPath("/v1/accounts/"+ accountId + "/orders/" + order_id);
-        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject("DELETE", uri.getPathAndQuery());
+        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject(status,"DELETE", uri.getPathAndQuery());
         if(result){
             Poco::Dynamic::Var test = result->get("order");
             Poco::JSON::Object::Ptr subObject = test.extract<Poco::JSON::Object::Ptr>();
             return OrderResponse(subObject->get("id").toString(), subObject->get("status").toString());
         }
         else{ // errored return error
-            return OrderResponse(order_id,"rejected");
+            //std::cout<< "status: " << status << std::endl; // = 400 already canceled = 401 not found
+            if(status == 401){
+                return OrderResponse(order_id,"Order Id not found");
+            }
+            return OrderResponse(order_id,"Unprocessable/rejected");
         }
     };
     virtual ClockResponse getClock(){ // serves the current market timestamp, whether or not the market is currently open, as well as the times of the next market open and close.
-        Poco::JSON::Object::Ptr ptr = sendRequestAndReturnJSONObject("GET", "/v1/markets/clock");//->stringify(std::cout);
+        int status = 0;
+        Poco::JSON::Object::Ptr ptr = sendRequestAndReturnJSONObject(status,"GET", "/v1/markets/clock");//->stringify(std::cout);
         ptr = ptr->getObject("clock");
         std::string timestamp = ptr->get("date").toString() + "T" + ptr->get("timestamp").toString(); // need to do proper time stamp conversion to match Alpaca
         bool is_open = ptr->get("state").toString() == "open";
