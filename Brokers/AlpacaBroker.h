@@ -230,7 +230,7 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         Poco::JSON::Object::Ptr ptr = sendRequestAndReturnJSONObject(apiSession,status,"GET", "/v2/clock", Poco::JSON::Object()); // ->stringify(std::cout)
         return ClockResponse(ptr->get("timestamp").toString(),ptr->get("is_open").convert<bool>());
     };
-    virtual std::vector<BarResponse> getDailyHistoricalBars(std:: string symbol, std::string start, std::string end){
+    virtual std::vector<BarResponse> getDailyHistoricalBars(std:: string symbol, std::string start, std::string end){ // start and end YYYY-MM-DD representation works
         std::vector<BarResponse> bars;
         int status = 0;
         Poco::URI uri;

@@ -21,12 +21,14 @@ int main(){
     JSONFileParser file("/mnt/c/Users/nicol/Desktop/TradingSystems/broker.cfg");
     TradierBroker brokerT(file,"tradierPaper");
     AlpacaBroker brokerA(file, "alpacaPaper");
-    // std::vector<BarResponse> temp = brokerT.getDailyHistoricalBars("SPY","2023-03-04","");
-    // for(int i = 0; i < temp.size(); i++){
-    //     BarResponse bar = temp.at(i);
-    //     std::cout << bar.low << " " << bar.high << " " << bar.open << " " << bar.close << " " << bar.volume << " " << bar.timestamp << std::endl;
-    // }
-    std::vector<BarResponse> temp = brokerA.getDailyHistoricalBars("AAPL","2023-03-04","");
+    std::cout << "tradier:"<< std::endl;
+    std::vector<BarResponse> temp = brokerT.getDailyHistoricalBars("SPY","2023-03-04","");
+    for(int i = 0; i < temp.size(); i++){
+        BarResponse bar = temp.at(i);
+        std::cout << bar.low << " " << bar.high << " " << bar.open << " " << bar.close << " " << bar.volume << " " << bar.timestamp << std::endl;
+    }
+    std::cout << "alpaca:"<< std::endl;
+    temp = brokerA.getDailyHistoricalBars("SPY","2023-03-04","");
     for(int i = 0; i < temp.size(); i++){
         BarResponse bar = temp.at(i);
         std::cout << bar.low << " " << bar.high << " " << bar.open << " " << bar.close << " " << bar.volume << " " << bar.timestamp << std::endl;
