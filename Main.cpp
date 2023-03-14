@@ -26,7 +26,7 @@ int main(){
     //     BarResponse bar = temp.at(i);
     //     std::cout << bar.low << " " << bar.high << " " << bar.open << " " << bar.close << " " << bar.volume << " " << bar.timestamp << std::endl;
     // }
-    std::vector<BarResponse> temp = brokerA.getDailyHistoricalBars("AAPL","","");
+    std::vector<BarResponse> temp = brokerA.getDailyHistoricalBars("AAPL","2023-03-04","");
     for(int i = 0; i < temp.size(); i++){
         BarResponse bar = temp.at(i);
         std::cout << bar.low << " " << bar.high << " " << bar.open << " " << bar.close << " " << bar.volume << " " << bar.timestamp << std::endl;
