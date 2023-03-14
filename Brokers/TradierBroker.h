@@ -224,6 +224,25 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         return ClockResponse(timestamp,is_open);
     }; 
     // missing could be added: ALL marketData methods(leave for data pipeline websocket?), Watchlist, gain/loss, and History methods
+    virtual std::vector<BarResponse> getDailyHistoricalBars(std:: string symbol, std::string start, std::string end){ // start and end in YYYY-MM-DD representation
+        std::vector<BarResponse> bars;
+        int status = 0;
+        Poco::URI uri;
+        uri.setPath("/v1/markets/history");
+        uri.addQueryParameter("symbol", symbol);
+        uri.addQueryParameter("start", start);
+        uri.addQueryParameter("end", end);
+        Poco::JSON::Object::Ptr ptr = sendRequestAndReturnJSONObject(status,"GET", uri.getPathAndQuery());
+        if(ptr){
+            ptr = ptr->getObject("history");
+            Poco::JSON::Array::Ptr array = ptr->getArray("day");
+            for(std::size_t i = 0; i < array->size(); i++){
+                ptr = array->getObject(i);
+                bars.push_back(BarResponse(symbol,ptr->get("open"),ptr->get("close"),ptr->get("low"),ptr->get("high"),ptr->get("volume"),ptr->get("date")));
+            }
+        }
+        return bars;
+    };
 
     ~TradierBroker(){
     };

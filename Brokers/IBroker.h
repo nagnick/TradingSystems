@@ -14,5 +14,6 @@ class IBroker{ // classes that inherite this interface are solely for sending tr
         string duration, string price, string stop)=0;  //DONE
     virtual BalanceResponse getBalance() = 0; // DONE
     virtual ClockResponse getClock() = 0; // DONE
+    virtual std::vector<BarResponse> getDailyHistoricalBars(std:: string symbol, std::string start, std::string end) = 0;
     virtual ~IBroker(){};
     };

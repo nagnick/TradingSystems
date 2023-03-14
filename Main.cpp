@@ -21,6 +21,16 @@ int main(){
     JSONFileParser file("/mnt/c/Users/nicol/Desktop/TradingSystems/broker.cfg");
     TradierBroker brokerT(file,"tradierPaper");
     AlpacaBroker brokerA(file, "alpacaPaper");
+    // std::vector<BarResponse> temp = brokerT.getDailyHistoricalBars("SPY","2023-03-04","");
+    // for(int i = 0; i < temp.size(); i++){
+    //     BarResponse bar = temp.at(i);
+    //     std::cout << bar.low << " " << bar.high << " " << bar.open << " " << bar.close << " " << bar.volume << " " << bar.timestamp << std::endl;
+    // }
+    std::vector<BarResponse> temp = brokerA.getDailyHistoricalBars("AAPL","","");
+    for(int i = 0; i < temp.size(); i++){
+        BarResponse bar = temp.at(i);
+        std::cout << bar.low << " " << bar.high << " " << bar.open << " " << bar.close << " " << bar.volume << " " << bar.timestamp << std::endl;
+    }
     // ClockResponse temp = brokerT.getClock();
     // std::cout << "tradier: ";
     // std::cout << "time: "<< temp.timestamp << " market is open: " << temp.is_open << std::endl; 
@@ -31,14 +41,14 @@ int main(){
     // std::cout << result.size() << std::endl;
     // OrderResponse res = brokerT.placeEquityOrder("AAPL","buy","10","limit","day","100","NULL");
     // std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
-    OrderResponse res = brokerT.cancelOrderByOrderId("5740682");
-    std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
-//OrderResponse res = brokerT.placeEquityOrder("AAPL","sell","10","market","day","NULL","NULL");
-//std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
-// result = brokerT.getAllPositions();
-// std::cout << result.size() << std::endl;
-// OrderResponse res = brokerT.cancelOrderByOrderId("5718856");
-// std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
+    // OrderResponse res = brokerT.cancelOrderByOrderId("5740682");
+    // std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
+    //OrderResponse res = brokerT.placeEquityOrder("AAPL","sell","10","market","day","NULL","NULL");
+    //std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
+    // result = brokerT.getAllPositions();
+    // std::cout << result.size() << std::endl;
+    // OrderResponse res = brokerT.cancelOrderByOrderId("5718856");
+    // std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
     //broker2.getBalances();
     // PrintSubscriber sub;
     // AlpacaStream* pipeA = new AlpacaStream(file,"alpacaReal", "/v2/iex", 443);

@@ -3,7 +3,7 @@
 
 struct IBrokerResponse{
     virtual int getResponseType()=0;
-    // 0 = OrderResponse; 1 = PositionResponse; 2 = BalanceResponse; 3 = ClockResponse;
+    // 0 = OrderResponse; 1 = PositionResponse; 2 = BalanceResponse; 3 = ClockResponse; 4 = BarResponse;
     ~IBrokerResponse(){};
 };
 struct OrderResponse: public IBrokerResponse{
@@ -40,4 +40,15 @@ struct ClockResponse: public IBrokerResponse{
         return 3;
     };
     ~ClockResponse(){};
+};
+
+struct BarResponse: public IBrokerResponse{
+    std::string symbol, open, close, low, high, volume, timestamp;
+    BarResponse(std::string _symbol, std::string _open, std::string _close, std::string _low,
+        std::string _high, std::string _volume, std::string _timestamp):
+    symbol(_symbol),open(_open),close(_close),low(_low),high(_high),volume(_volume),timestamp(_timestamp){};
+    virtual int getResponseType(){
+        return 4;
+    };
+    ~BarResponse(){};
 };
