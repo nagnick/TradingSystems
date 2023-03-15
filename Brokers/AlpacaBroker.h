@@ -245,7 +245,8 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
             Poco::JSON::Array::Ptr array = ptr->getArray("bars");
             for(std::size_t i = 0; i < array->size(); i++){
                 ptr = array->getObject(i);
-                bars.push_back(BarResponse(symbol,ptr->get("o"),ptr->get("c"),ptr->get("l"),ptr->get("h"),ptr->get("v"),ptr->get("t")));
+                std::string timestamp = ptr->get("t");
+                bars.push_back(BarResponse(symbol,ptr->get("o"),ptr->get("c"),ptr->get("l"),ptr->get("h"),ptr->get("v"),timestamp.substr(0,10)));
             }
         }
         return bars;
