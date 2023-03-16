@@ -1,0 +1,7 @@
+
+class SimpleStrategy{
+    public:
+    SimpleStrategy(){
+        
+    }
+};

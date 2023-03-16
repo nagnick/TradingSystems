@@ -47,6 +47,7 @@ add_executable(main
 add_subdirectory(Brokers)
 add_subdirectory(Streams)
 add_subdirectory(helpers)
+add_subdirectory(Strategies)
 add_compile_options(-Wall -Wextra -pedantic -pthread) # -pthread
 
 target_include_directories (main PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
