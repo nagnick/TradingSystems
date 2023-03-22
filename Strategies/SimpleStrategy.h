@@ -5,22 +5,25 @@
 class SimpleStrategy: public IDataStreamSubscriber {
     IBroker& broker;
     IDataStream& stream;
-    std::string open, close, high, low, volume;
-    std::string buyingPower; // tends to include margin....
+    double open, close, high, low, volume;
+    double buyingPower; // tends to include margin....
+    double entryPrice = 0;
+    double exitPrice = 1000;
+    bool inPosition = false;
     public:
     SimpleStrategy(IBroker& _broker, IDataStream& _stream):broker(_broker),stream(_stream){
         stream.subscribe(this);
         stream.subscribeToDataStream("SPY",this);
         std::vector<BarResponse> bars = broker.getDailyHistoricalBars("SPY","","");
-        buyingPower = broker.getBalance().buying_power;
+        buyingPower = std::stod(broker.getBalance().buying_power);
         //std::cout << "Buying power" << buyingPower << std::endl;
         if(bars.size() > 0){ // initialize the strats market stats...
             BarResponse bar = bars.at(bars.size()-1);
-            open = bar.open;
-            close = bar.close;
-            high = bar.high;
-            low = bar.low;
-            volume = bar.volume;
+            open = std::stod(bar.open);
+            close = std::stod(bar.close);
+            high = std::stod(bar.high);
+            low = std::stod(bar.low);
+            volume = std::stod(bar.volume);
         }
         // std::cout << "size of bars:" << bars.size() << std::endl;
         // for (auto &&bar : bars){
@@ -28,7 +31,7 @@ class SimpleStrategy: public IDataStreamSubscriber {
         // }
     };
     virtual void notify(std::shared_ptr<IStreamData> data){
-        std::cout <<  data->getDataType();
+        //std::cout <<  data->getDataType();
         switch(data->getDataType()){
             case -1:{
                 //std::cout << " OtherData ";
@@ -43,9 +46,27 @@ class SimpleStrategy: public IDataStreamSubscriber {
             }
             case 1:{
                 std::shared_ptr<QuoteData> quote = std::dynamic_pointer_cast<QuoteData,IStreamData>(data);
-                std::cout << " Quote ";
-                std::cout << quote->symbol << quote->bidPrice << quote->bidSize << quote->bidExchange << quote->bidTime << std::endl;
-                std::cout << quote->askPrice << quote->askSize << quote->askExchange << quote->askTime <<std::endl;
+                // std::cout << " Quote ";
+                // std::cout << quote->symbol << quote->bidPrice << quote->bidSize << quote->bidExchange << quote->bidTime << std::endl;
+                // std::cout << quote->askPrice << quote->askSize << quote->askExchange << quote->askTime <<std::endl;
+                double priceIcanBuyAt = std::stod(quote->askPrice); // ask price = lowest a seller will sell at
+                double priceIcanSellAt = std::stod(quote->bidPrice); // bid price = highest a buyer will buy at
+                if(!inPosition && priceIcanBuyAt < open && priceIcanBuyAt < exitPrice){
+                    //buy
+                    entryPrice = priceIcanBuyAt;
+                    OrderResponse res = broker.placeEquityOrder("SPY","buy","10","market","day","","");
+                    std::cout << res.status << res.id << std::endl;
+                    inPosition = true;
+                    std::cout << "Bought 10 shares of spy" << std::endl;
+                }
+                if(inPosition && priceIcanSellAt > entryPrice){
+                    // sell
+                    exitPrice = priceIcanSellAt;
+                    OrderResponse res = broker.placeEquityOrder("SPY","sell","10","market","day","","");
+                    std::cout << res.status << res.id << std::endl;
+                    inPosition = false;
+                    std::cout << "Sold 10 shares of spy" << std::endl;
+                }
                 break;
             }
             default:{

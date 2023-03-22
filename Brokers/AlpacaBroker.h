@@ -65,10 +65,10 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         //get response
         Poco::Net::HTTPResponse response;
         std::istream& s = session->receiveResponse(response);
-        //std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
+    //std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
         status = response.getStatus();
         if(status == 200){ // valid responses are 200 and contian valis json responses that can be parsed
-            int length = response.getContentLength();
+            //int length = response.getContentLength();
             std::stringstream buffer;
             buffer << s.rdbuf();
         //std::cout<< buffer.str() << std::endl;
@@ -133,7 +133,10 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
             //set("trail_percent","NULL").set("trail_price","NULL");  might have to add these fields later for more complex orders
             Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject(apiSession,status,"POST", "/v2/orders",obj);
         //std::cout << result->get("id").toString() << std::endl;
-            return OrderResponse(result->get("id").toString(),result->get("status").toString());
+            if(result){
+                return OrderResponse(result->get("id").toString(),result->get("status").toString());
+            }
+            return OrderResponse("-1","ERROR");
     }
     void placeOrder(string symbol, string qty, string notional, string side, string type,
      string time_in_force, string limit_price, string stop_price, string trail_price,
@@ -240,7 +243,7 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         uri.addQueryParameter("timeframe","1Day"); // figure out timeframe field formatting 
         //std:: cout << sendRequestAndReturnString(dataSession,"GET",uri.getPathAndQuery(), Poco::JSON::Object()) << std::endl;
         Poco::JSON::Object::Ptr ptr = sendRequestAndReturnJSONObject(dataSession,status,"GET", uri.getPathAndQuery(), Poco::JSON::Object());
-        std:: cout << status << std::endl;
+    //std:: cout << status << std::endl;
         if(ptr){
             Poco::JSON::Array::Ptr array = ptr->getArray("bars");
             for(std::size_t i = 0; i < array->size(); i++){
