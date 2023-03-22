@@ -5,6 +5,8 @@
 #include "Streams/AlpacaStream.h"
 #include "Streams/PrintSubscriber.h"
 #include "helpers/JSONFileParser.h"
+#include "Strategies/SimpleStrategy.h"
+
 #include <csignal>
 #include <iostream>
 
@@ -21,18 +23,18 @@ int main(){
     JSONFileParser file("/mnt/c/Users/nicol/Desktop/TradingSystems/broker.cfg");
     TradierBroker brokerT(file,"tradierPaper");
     AlpacaBroker brokerA(file, "alpacaPaper");
-    std::cout << "tradier:"<< std::endl;
-    std::vector<BarResponse> temp = brokerT.getDailyHistoricalBars("SPY","2023-03-04","");
-    for(int i = 0; i < temp.size(); i++){
-        BarResponse bar = temp.at(i);
-        std::cout << bar.low << " " << bar.high << " " << bar.open << " " << bar.close << " " << bar.volume << " " << bar.timestamp << std::endl;
-    }
-    std::cout << "alpaca:"<< std::endl;
-    temp = brokerA.getDailyHistoricalBars("SPY","2023-03-04","");
-    for(int i = 0; i < temp.size(); i++){
-        BarResponse bar = temp.at(i);
-        std::cout << bar.low << " " << bar.high << " " << bar.open << " " << bar.close << " " << bar.volume << " " << bar.timestamp << std::endl;
-    }
+    // std::cout << "tradier:"<< std::endl;
+    // std::vector<BarResponse> temp = brokerT.getDailyHistoricalBars("SPY","2023-03-04","");
+    // for(int i = 0; i < temp.size(); i++){
+    //     BarResponse bar = temp.at(i);
+    //     std::cout << bar.low << " " << bar.high << " " << bar.open << " " << bar.close << " " << bar.volume << " " << bar.timestamp << std::endl;
+    // }
+    // std::cout << "alpaca:"<< std::endl;
+    // temp = brokerA.getDailyHistoricalBars("SPY","2023-03-04","");
+    // for(int i = 0; i < temp.size(); i++){
+    //     BarResponse bar = temp.at(i);
+    //     std::cout << bar.low << " " << bar.high << " " << bar.open << " " << bar.close << " " << bar.volume << " " << bar.timestamp << std::endl;
+    // }
     // ClockResponse temp = brokerT.getClock();
     // std::cout << "tradier: ";
     // std::cout << "time: "<< temp.timestamp << " market is open: " << temp.is_open << std::endl; 
@@ -53,15 +55,16 @@ int main(){
     // std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
     //broker2.getBalances();
     // PrintSubscriber sub;
-    // AlpacaStream* pipeA = new AlpacaStream(file,"alpacaReal", "/v2/iex", 443);
+    AlpacaStream* pipeA = new AlpacaStream(file,"alpacaReal", "/v2/iex", 443);
+    SimpleStrategy strat(brokerA, *pipeA);
     // std::string sessionId = brokerT.getWebsocketSessionId();
     // TradierStream* pipeT = new TradierStream(file,"tradierReal", sessionId, "/v1/markets/events", 443);
-    // pipeA->start();
+    pipeA->start();
     // pipeA->subscribe(&sub);
     // pipeA->subscribeToDataStream("SPY",&sub);
     while(run){ // keep main thread alive until killed
     }
-    //pipeA->stop();
+    pipeA->stop();
     std::cout << "killed threads" << std::endl;
     return 0;
 }

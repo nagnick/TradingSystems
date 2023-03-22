@@ -136,7 +136,7 @@ class AlpacaStream : public IDataStream, public IAsync {
                 // Poco::InflatingInputStream inflater(ss, Poco::InflatingStreamBuf::STREAM_GZIP);
                 // inflater.read(buffer,10000);
                 std::string output(buffer);
-            std::cout << length <<output <<std::endl;
+            //std::cout << length <<output <<std::endl;
                 Poco::JSON::Parser parser;
                 Poco::Dynamic::Var result = parser.parse(output);
                 Poco::JSON::Array::Ptr arr = result.extract<Poco::JSON::Array::Ptr>();
