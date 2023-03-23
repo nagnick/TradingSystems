@@ -54,14 +54,14 @@ int main(){
     // OrderResponse res = brokerT.cancelOrderByOrderId("5718856");
     // std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
     //broker2.getBalances();
-    // PrintSubscriber sub;
+    PrintSubscriber sub;
     AlpacaStream* pipeA = new AlpacaStream(file,"alpacaReal", "/v2/iex", 443);
-    SimpleStrategy strat(brokerA, *pipeA);
+    //SimpleStrategy strat(brokerA, *pipeA);
     // std::string sessionId = brokerT.getWebsocketSessionId();
     // TradierStream* pipeT = new TradierStream(file,"tradierReal", sessionId, "/v1/markets/events", 443);
     pipeA->start();
-    // pipeA->subscribe(&sub);
-    // pipeA->subscribeToDataStream("SPY",&sub);
+    pipeA->subscribe(&sub);
+    pipeA->subscribeToDataStream("SPY",&sub);
     while(run){ // keep main thread alive until killed
     }
     pipeA->stop();
