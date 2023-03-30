@@ -4,7 +4,7 @@
 #include "Streams/TradierStream.h"
 #include "Streams/AlpacaStream.h"
 #include "Streams/PrintSubscriber.h"
-#include "helpers/JSONFileParser.h"
+#include "Helpers/JSONFileParser.h"
 #include "Strategies/SimpleStrategy.h"
 
 #include <csignal>

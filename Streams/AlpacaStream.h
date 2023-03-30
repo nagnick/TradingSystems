@@ -1,8 +1,8 @@
 #pragma once 
 #include "IDataStream.h"
-#include "helpers/IAsync.h"
+#include "Helpers/IAsync.h"
 #include "StreamData.h"
-#include "helpers/JSONFileParser.h"
+#include "Helpers/JSONFileParser.h"
 
 #include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
