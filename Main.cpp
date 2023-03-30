@@ -64,7 +64,7 @@ int main(){
     pipeA->subscribeToDataStream("SPY",&sub);
     while(run){ // keep main thread alive until killed
     }
-    pipeA->stop();
+    //pipeA->stop(); //not required when pipeA is destructed the tread is killed
     std::cout << "killed threads" << std::endl;
     return 0;
 }

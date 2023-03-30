@@ -177,11 +177,5 @@ class AlpacaStream : public IDataStream, public IAsync {
             }
         }
     };
-    // virtual void start(){
-    //     running = true;
-    //     thread = std::thread(&AlpacaPipeline::loop, this);
-    // };
-    ~AlpacaStream(){
-        stop();
-    }
+    ~AlpacaStream(){}
 };

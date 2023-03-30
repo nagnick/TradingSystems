@@ -4,61 +4,32 @@
 #include <mutex>
 #include <condition_variable>
 
-template <typename T> class SafeQueue{ // thanks stackoverflow
-    public:
-        SafeQueue();
-        ~SafeQueue();
+// A threadsafe-queue.
+template <class T> class SafeQueue{ // thanks stack overflow for this nice queue
+public:
+    SafeQueue():q(), m(), c(){}
+    ~SafeQueue(){}
 
-        T& front();
-        void pop_front();
-        void push_back(const T& item);
-        void push_back(T&& item);
-        int size();
-        bool empty();
-
-    private:
-        std::deque<T> queue_;
-        std::mutex mutex_;
-        std::condition_variable cond_;
-}; 
-
-    template <typename T> SafeQueue<T>::SafeQueue(){}
-
-    template <typename T> SafeQueue<T>::~SafeQueue(){}
-
-    template <typename T> T& SafeQueue<T>::front(){
-        std::unique_lock<std::mutex> mlock(mutex_);
-        while (queue_.empty()){
-            cond_.wait(mlock);
+    // Add an element to the queue.
+    void enqueue(T t){
+        std::lock_guard<std::mutex> lock(m);
+        q.push(t);
+        c.notify_one();
+    }
+    // Get the "front"-element.
+    // If the queue is empty, wait till a element is avaiable.
+    T dequeue(){
+        std::unique_lock<std::mutex> lock(m);
+        while(q.empty()){
+        // release lock as long as the wait and reaquire it afterwards.
+        c.wait(lock);
         }
-        return queue_.front();
+        T val = q.front();
+        q.pop();
+        return val;
     }
-
-    template <typename T> void SafeQueue<T>::pop_front(){
-        std::unique_lock<std::mutex> mlock(mutex_);
-        while (queue_.empty()){
-            cond_.wait(mlock);
-        }
-        queue_.pop_front();
-    }     
-
-    template <typename T> void SafeQueue<T>::push_back(const T& item){
-        std::unique_lock<std::mutex> mlock(mutex_);
-        queue_.push_back(item);
-        mlock.unlock();     // unlock before notificiation to minimize mutex con
-        cond_.notify_one(); // notify one waiting thread
-    }
-
-    template <typename T> void SafeQueue<T>::push_back(T&& item){
-        std::unique_lock<std::mutex> mlock(mutex_);
-        queue_.push_back(std::move(item));
-        mlock.unlock();     // unlock before notificiation to minimize mutex con
-        cond_.notify_one(); // notify one waiting thread
-    }
-
-    template <typename T> int SafeQueue<T>::size(){
-        std::unique_lock<std::mutex> mlock(mutex_);
-        int size = queue_.size();
-        mlock.unlock();
-        return size;
-    }
+private:
+  std::queue<T> q;
+  mutable std::mutex m;
+  std::condition_variable c;
+};

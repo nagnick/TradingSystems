@@ -142,10 +142,6 @@ class TradierStream: public IDataStream, public IAsync{
             }
         }
     };
-    // virtual void start(){
-    //     running = true;
-    //     thread = std::thread(&TradierPipeline::loop, this);
-    // }
     // virtual void subscribeToDataStream(std::string stream, IDataStreamSubscriber* subscriber){// allow subscribers to specify the stream of data of their symbols to receive 
     //     //filter : trade,quote,summary,timesale,tradex default is all
     //     // not implemented yet. maybe overkill on the granularity of the subscribe maybe best to leave it to subscriber to filter out themselves..
@@ -180,7 +176,5 @@ class TradierStream: public IDataStream, public IAsync{
             }
         }  
     };
-    virtual ~TradierStream(){
-        stop();
-    };
+    virtual ~TradierStream(){};
 };
