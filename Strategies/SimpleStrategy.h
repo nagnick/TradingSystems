@@ -1,3 +1,4 @@
+#pragma once
 #include "Streams/IDataStreamSubscriber.h"
 #include "Brokers/IBroker.h"
 
@@ -30,51 +31,38 @@ class SimpleStrategy: public IDataStreamSubscriber {
         //     std::cout << "time stamp" << bar.timestamp << std::endl;
         // }
     };
-    virtual void notify(std::shared_ptr<IStreamData> data){
-        //std::cout <<  data->getDataType();
-        switch(data->getDataType()){
-            case -1:{
-                //std::cout << " OtherData ";
-                //std::cout << std::dynamic_pointer_cast<OtherData,IStreamData>(data)->data << std::endl;
-                break;
-            }
-            case 0:{
-                std::shared_ptr<TradeData> trade = std::dynamic_pointer_cast<TradeData,IStreamData>(data);
-                // std::cout << " Trade ";
-                // std::cout << trade->symbol << trade->exchangeCode << trade->price << trade->tradeSize << trade->time << std::endl;
-                break;
-            }
-            case 1:{
-                std::shared_ptr<QuoteData> quote = std::dynamic_pointer_cast<QuoteData,IStreamData>(data);
-                // std::cout << " Quote ";
-                // std::cout << quote->symbol << quote->bidPrice << quote->bidSize << quote->bidExchange << quote->bidTime << std::endl;
-                // std::cout << quote->askPrice << quote->askSize << quote->askExchange << quote->askTime <<std::endl;
-                double priceIcanBuyAt = std::stod(quote->askPrice); // ask price = lowest a seller will sell at
-                double priceIcanSellAt = std::stod(quote->bidPrice); // bid price = highest a buyer will buy at
-                if(!inPosition && priceIcanBuyAt < open && priceIcanBuyAt < exitPrice){
-                    //buy
-                    entryPrice = priceIcanBuyAt;
-                    OrderResponse res = broker.placeEquityOrder("SPY","buy","10","market","day","","");
-                    std::cout << res.status << res.id << std::endl;
-                    inPosition = true;
-                    std::cout << "Bought 10 shares of spy" << std::endl;
-                }
-                if(inPosition && priceIcanSellAt > entryPrice){
-                    // sell
-                    exitPrice = priceIcanSellAt;
-                    OrderResponse res = broker.placeEquityOrder("SPY","sell","10","market","day","","");
-                    std::cout << res.status << res.id << std::endl;
-                    inPosition = false;
-                    std::cout << "Sold 10 shares of spy" << std::endl;
-                }
-                break;
-            }
-            default:{
-                //std::cout << "error unrecognized derived type of IStreamDate." << std::endl;
-                break;
-            }
+    virtual void onData(std::shared_ptr<IStreamData> data){
+        // default case do nothing with is fall through data
+    }
+    virtual void onData(std::shared_ptr<OtherData> other){
+        // do nothing
+    }
+    virtual void onData(std::shared_ptr<TradeData> trade){
+        // do nothing
+    }
+    virtual void onData(std::shared_ptr<QuoteData> quote){
+        // std::cout << " Quote ";
+        // std::cout << quote->symbol << quote->bidPrice << quote->bidSize << quote->bidExchange << quote->bidTime << std::endl;
+        // std::cout << quote->askPrice << quote->askSize << quote->askExchange << quote->askTime <<std::endl;
+        double priceIcanBuyAt = std::stod(quote->askPrice); // ask price = lowest a seller will sell at
+        double priceIcanSellAt = std::stod(quote->bidPrice); // bid price = highest a buyer will buy at
+        if(!inPosition && priceIcanBuyAt < open && priceIcanBuyAt < exitPrice){
+            //buy
+            entryPrice = priceIcanBuyAt;
+            OrderResponse res = broker.placeEquityOrder("SPY","buy","10","market","day","","");
+            std::cout << res.status << res.id << std::endl;
+            inPosition = true;
+            std::cout << "Bought 10 shares of spy" << std::endl;
         }
-    };
+        if(inPosition && priceIcanSellAt > entryPrice){
+            // sell
+            exitPrice = priceIcanSellAt;
+            OrderResponse res = broker.placeEquityOrder("SPY","sell","10","market","day","","");
+            std::cout << res.status << res.id << std::endl;
+            inPosition = false;
+            std::cout << "Sold 10 shares of spy" << std::endl;
+        }
+    }
     ~SimpleStrategy(){
 
     };
