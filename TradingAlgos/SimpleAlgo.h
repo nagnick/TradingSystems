@@ -3,7 +3,7 @@
 #include "Brokers/IBroker.h"
 
 #include "vector"
-class SimpleStrategy: public IDataStreamSubscriber {
+class SimpleAlgo: public IDataStreamSubscriber {
     IBroker& broker;
     IDataStream& stream;
     double open, close, high, low, volume;
@@ -12,7 +12,7 @@ class SimpleStrategy: public IDataStreamSubscriber {
     double exitPrice = 1000;
     bool inPosition = false;
     public:
-    SimpleStrategy(IBroker& _broker, IDataStream& _stream):broker(_broker),stream(_stream){
+    SimpleAlgo(IBroker& _broker, IDataStream& _stream):broker(_broker),stream(_stream){
         stream.subscribe(this);
         stream.subscribeToDataStream("SPY",this);
         std::vector<BarResponse> bars = broker.getDailyHistoricalBars("SPY","","");

@@ -5,7 +5,7 @@
 #include "Streams/AlpacaStream.h"
 #include "Streams/PrintSubscriber.h"
 #include "Helpers/JSONFileParser.h"
-#include "TradingAlgos/SimpleStrategy.h"
+#include "TradingAlgos/SimpleAlgo.h"
 
 #include <csignal>
 #include <iostream>
@@ -56,7 +56,7 @@ int main(){
     //broker2.getBalances();
     PrintSubscriber sub;
     AlpacaStream* pipeA = new AlpacaStream(file,"alpacaReal", "/v2/iex", 443);
-    //SimpleStrategy strat(brokerA, *pipeA);
+    //SimpleAlgo strat(brokerA, *pipeA);
     // std::string sessionId = brokerT.getWebsocketSessionId();
     // TradierStream* pipeT = new TradierStream(file,"tradierReal", sessionId, "/v1/markets/events", 443);
     pipeA->start();
