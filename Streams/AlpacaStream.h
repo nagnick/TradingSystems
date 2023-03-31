@@ -66,6 +66,7 @@ class AlpacaStream : public IDataStream, public IAsync {
         apiKey = file.getSubObjectValue(accountJSONKey,"APIKey");
         apiSecretKey = file.getSubObjectValue(accountJSONKey,"APISecretKey");
         connect();
+        start(); // start thread
     };
     virtual void connect(){ // do only once to start up websocket
         session = new Poco::Net::HTTPSClientSession(url, port);

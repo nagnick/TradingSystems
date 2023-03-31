@@ -1,8 +1,6 @@
 
-#include "Brokers/TradierBroker.h"
-#include "Brokers/AlpacaBroker.h"
-#include "Streams/TradierStream.h"
-#include "Streams/AlpacaStream.h"
+#include "Factories/AlpacaSystemComponentFactory.h"
+#include "Factories/TradierSystemComponentFactory.h"
 #include "Streams/PrintSubscriber.h"
 #include "Helpers/JSONFileParser.h"
 #include "TradingAlgos/SimpleAlgo.h"
@@ -19,10 +17,12 @@ void signalHandler(int i ){
 }
 int main(){
     std::signal(SIGINT, signalHandler);
-    
-    JSONFileParser file("/mnt/c/Users/nicol/Desktop/TradingSystems/broker.cfg");
-    TradierBroker brokerT(file,"tradierPaper");
-    AlpacaBroker brokerA(file, "alpacaPaper");
+    TradierSystemComponentFactory tFactory;
+    AlpacaSystemComponentFactory aFactory;
+    //JSONFileParser file("/mnt/c/Users/nicol/Desktop/TradingSystems/broker.cfg");
+    bool paperTrading = true;
+    IBroker* brokerT = tFactory.getBroker(paperTrading);
+    IBroker* brokerA = aFactory.getBroker(paperTrading);
     // std::cout << "tradier:"<< std::endl;
     // std::vector<BarResponse> temp = brokerT.getDailyHistoricalBars("SPY","2023-03-04","");
     // for(int i = 0; i < temp.size(); i++){
@@ -55,16 +55,14 @@ int main(){
     // std::cout << "response type = " << res.getResponseType() << " orderID:"<<res.id << " status:" << res.status << std::endl;
     //broker2.getBalances();
     PrintSubscriber sub;
-    AlpacaStream* pipeA = new AlpacaStream(file,"alpacaReal", "/v2/iex", 443);
+    IDataStream* pipeA = aFactory.getStream();
     //SimpleAlgo strat(brokerA, *pipeA);
     // std::string sessionId = brokerT.getWebsocketSessionId();
-    // TradierStream* pipeT = new TradierStream(file,"tradierReal", sessionId, "/v1/markets/events", 443);
-    pipeA->start();
+    IDataStream* pipeT = tFactory.getStream();
     pipeA->subscribe(&sub);
     pipeA->subscribeToDataStream("SPY",&sub);
     while(run){ // keep main thread alive until killed
     }
-    //pipeA->stop(); //not required when pipeA is destructed the tread is killed
     std::cout << "killed threads" << std::endl;
     return 0;
 }

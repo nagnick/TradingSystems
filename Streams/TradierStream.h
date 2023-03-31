@@ -2,6 +2,7 @@
 #include "IDataStream.h"
 #include "Helpers/IAsync.h"
 #include "Helpers/JSONFileParser.h"
+#include "Brokers/TradierBroker.h"
 #include "StreamData.h"
 
 #include "Poco/Net/HTTPSClientSession.h"
@@ -15,6 +16,7 @@
 
 class TradierStream: public IDataStream, public IAsync{
     std::string url, sessionId, authScheme, apiKey, urlPath;
+    TradierBroker& broker; // holds a ref incase it needs a new session id...
     int port;
     char* buffer = new char[10000];
     Poco::Net::HTTPSClientSession* session = nullptr;
@@ -55,14 +57,15 @@ class TradierStream: public IDataStream, public IAsync{
     };
 
     public:
-    TradierStream(JSONFileParser& file, std::string  accountJSONKey, std::string _sessionId, std::string _urlPath, int _port){ // urlPath = "/v1/markets/events"
-        sessionId = _sessionId;
+    TradierStream(JSONFileParser& file, TradierBroker& _broker, std::string  accountJSONKey, std::string _urlPath, int _port): broker(_broker){ // urlPath = "/v1/markets/events"
+        sessionId = broker.getWebsocketSessionId();
         urlPath = _urlPath;
         port = _port;
         url = file.getSubObjectValue(accountJSONKey,"WSURL");
         authScheme = file.getSubObjectValue(accountJSONKey,"AuthScheme");
         apiKey = file.getSubObjectValue(accountJSONKey,"APIKey");
         connect();
+        start(); // start thread
     }
     virtual void connect(){ // do only once to start up websocket
         session = new Poco::Net::HTTPSClientSession(url, port);
