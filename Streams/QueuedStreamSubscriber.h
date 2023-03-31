@@ -9,7 +9,8 @@ class QueuedStreamSubscriber: public IAsync, public IDataStreamSubscriber{
     QueuedStreamSubscriber(){
         start(); // start thread at construction;
     }
-    ~QueuedStreamSubscriber(){} // stop called when IASYNC is destroyed which is before this destructor is called
+    virtual ~QueuedStreamSubscriber(){} // stop must be called in child destructor to stop pure virtual methods from being called by async thread...since
+    // child destructor is called first always
     virtual void notify(std::shared_ptr<IStreamData> data){ // Overridden to push the data to the queue
     // for queued subscriber it only gets added to its queue saves notifying time for publisher for computationally intensive subscriber TradingAlgos
         queue.enqueue(data);
@@ -20,9 +21,5 @@ class QueuedStreamSubscriber: public IAsync, public IDataStreamSubscriber{
             // but only call when thread wants to(off the publisher's hot path)
         }
     }
-    // these methods are called when the data is being processed off the queue(dynamic dispatch from IDataSub) by this subscribers thread default is do nothing with the data
-    virtual void onData(std::shared_ptr<IStreamData> data){}; // defualt case
-    virtual void onData(std::shared_ptr<OtherData> other){};
-    virtual void onData(std::shared_ptr<TradeData> trade){};
-    virtual void onData(std::shared_ptr<QuoteData> quote){};
+    // need child class to instantiate the onData methods which are called when the data is being processed off the queue(dynamic dispatch from IDataSub) by this subscribers thread
 };

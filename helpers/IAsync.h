@@ -13,11 +13,13 @@ class IAsync{ // adds a polling thread
         running = true;
         thread = std::thread(&IAsync::loop, this); // since abstract this will call subclass loop method
     }
-    virtual void stop(){ // don't need to call in inherited destructors this destructor will kill the thread
-        running = false;
-    };
-    virtual ~IAsync(){
+    virtual void stop(){ // need to call in inherited destructors to prevent pure virtual methods from being called during destruction
         running = false;
         thread.join();
+    };
+    virtual ~IAsync(){
+        if(running){
+            stop();
+        }
     };
 };

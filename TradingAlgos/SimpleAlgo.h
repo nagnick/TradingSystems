@@ -63,7 +63,5 @@ class SimpleAlgo: public IDataStreamSubscriber {
             std::cout << "Sold 10 shares of spy" << std::endl;
         }
     }
-    ~SimpleStrategy(){
-
-    };
+    ~SimpleAlgo(){};
 };
