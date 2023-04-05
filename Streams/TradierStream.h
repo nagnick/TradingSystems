@@ -4,6 +4,7 @@
 #include "Helpers/JSONFileParser.h"
 #include "Brokers/TradierBroker.h"
 #include "StreamData.h"
+#include "Factories/TradierSystemComponentFactory.h"
 
 #include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
@@ -15,6 +16,7 @@
 #include <map>
 
 class TradierStream: public IDataStream, public IAsync{
+    friend class TradierSystemComponentFactory;
     std::string url, sessionId, authScheme, apiKey, urlPath;
     TradierBroker& broker; // holds a ref incase it needs a new session id...
     int port;
@@ -55,8 +57,9 @@ class TradierStream: public IDataStream, public IAsync{
             }
         }
     };
-
-    public:
+    // prevent construction by anything other than friend factoy
+    TradierStream (const TradierStream&) = delete;
+    TradierStream& operator= (const TradierStream&) = delete;
     TradierStream(JSONFileParser& file, TradierBroker& _broker, std::string  accountJSONKey, std::string _urlPath, int _port): broker(_broker){ // urlPath = "/v1/markets/events"
         sessionId = broker.getWebsocketSessionId();
         urlPath = _urlPath;
@@ -67,6 +70,7 @@ class TradierStream: public IDataStream, public IAsync{
         connect();
         start(); // start thread
     }
+    public:
     virtual void connect(){ // do only once to start up websocket
         session = new Poco::Net::HTTPSClientSession(url, port);
         Poco::Net::HTTPResponse response;

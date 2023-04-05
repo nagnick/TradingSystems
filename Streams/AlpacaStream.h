@@ -3,6 +3,7 @@
 #include "Helpers/IAsync.h"
 #include "StreamData.h"
 #include "Helpers/JSONFileParser.h"
+#include "Factories/AlpacaSystemComponentFactory.h"
 
 #include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
@@ -16,6 +17,7 @@
 #include <map>
 
 class AlpacaStream : public IDataStream, public IAsync {
+    friend class AlpacaSystemComponentFactory;
     std::string url, apiKey, apiSecretKey, urlPath;
     int port;
     char* buffer = new char[10000];
@@ -57,8 +59,9 @@ class AlpacaStream : public IDataStream, public IAsync {
             }
         }
     };
-
-    public:
+    // prevent construction by anything other than friend factoy
+    AlpacaStream (const AlpacaStream&) = delete;
+    AlpacaStream& operator= (const AlpacaStream&) = delete;
     AlpacaStream(JSONFileParser& file, std::string  accountJSONKey, std::string _urlPath, int _port){  // pathUrl = /v2/{source} iex or sip to {source} iex is all you get without paying for subscription 
         urlPath = _urlPath;
         port = _port;
@@ -68,6 +71,7 @@ class AlpacaStream : public IDataStream, public IAsync {
         connect();
         start(); // start thread
     };
+    public:
     virtual void connect(){ // do only once to start up websocket
         session = new Poco::Net::HTTPSClientSession(url, port);
         Poco::Net::HTTPResponse response;
