@@ -9,8 +9,9 @@ class SellState: public IState{
     StateAlgo* parent;
     ISystemComponentFactory& factory;
     std::string symbol;
+    bool paper;
     public:
-    SellState(ISystemComponentFactory& _factory, StateAlgo* _parent, std::string _symbol):factory(_factory), parent(_parent), symbol(_symbol){
+    SellState(ISystemComponentFactory& _factory, StateAlgo* _parent, std::string _symbol, bool _paper):factory(_factory), parent(_parent), symbol(_symbol), paper(_paper){
 
     };
     virtual void onData(std::shared_ptr<IStreamData> data){ // defualt case

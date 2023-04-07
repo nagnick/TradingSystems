@@ -2,7 +2,7 @@
 #include "Streams/QueuedStreamSubscriber.h"
 #include "States/IState.h"
 #include "Factories/ISystemComponentFactory.h"
-class StateAlgo;
+class StateAlgo; // forward declare for States to hold reference to this class
 #include "States/BuyState.h"
 #include "States/SellState.h"
 
@@ -12,9 +12,10 @@ class StateAlgo: public QueuedStreamSubscriber{
     IState* current = nullptr;
     ISystemComponentFactory& factory;
     std::string symbol;
+    bool paper;
     public:
-    StateAlgo(ISystemComponentFactory& _factory, std::string symbolToTrade):factory(_factory),symbol(symbolToTrade){
-        current = new BuyState(factory, this, symbol);
+    StateAlgo(ISystemComponentFactory& _factory, std::string symbolToTrade, bool _paper):factory(_factory),symbol(symbolToTrade), paper(_paper){
+        current = new BuyState(factory, this, symbol, paper);
         IDataStream* stream = factory.getStream();
         // dangerous to let this escape in constructor but since the base classes are already constructed this is fine
         stream->subscribe(this);
