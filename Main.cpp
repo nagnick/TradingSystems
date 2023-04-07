@@ -4,6 +4,7 @@
 #include "Streams/PrintSubscriber.h"
 #include "Helpers/JSONFileParser.h"
 #include "TradingAlgos/SimpleAlgo.h"
+#include "TradingAlgos/StateAlgo.h"
 
 #include <csignal>
 #include <iostream>
@@ -59,6 +60,7 @@ int main(){
     //SimpleAlgo strat(brokerA, *pipeA);
     // std::string sessionId = brokerT.getWebsocketSessionId();
     IDataStream* pipeT = tFactory.getStream();
+    StateAlgo states(aFactory,"SPY"); // during construction will subscribe to stream from factory passed in 
     pipeA->subscribe(&sub);
     pipeA->subscribeToDataStream("SPY",&sub);
     while(run){ // keep main thread alive until killed

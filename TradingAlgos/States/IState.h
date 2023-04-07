@@ -4,6 +4,8 @@
 #include <memory>
 
 class IState{
+    public:
+    virtual ~IState(){};
     // dragged over from the IDataStreamSubscriber duplicate code but want to avoid dragging anything unnecessary from the IDataStreamSub as it grows out
     // only want the onData methods
     virtual void onData(std::shared_ptr<IStreamData> data) = 0; // defualt case
