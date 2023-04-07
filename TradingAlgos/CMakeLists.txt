@@ -1,6 +1,7 @@
-file(GLOB StreamsSRC_FILES    
+file(GLOB TradingAlgosSRC_FILES    
     "*.h"
 )
+add_subdirectory(States)
 target_sources(main PUBLIC
-    ${StreamsSRC_FILES}
+    ${TradingAlgosSRC_FILES}
 )
