@@ -1,7 +1,7 @@
 #pragma once
 #include "Factories/ISystemComponentFactory.h"
 #include "States/BuyState.h"
-
+#include "States/SellState.h"
 #include <string>
 
 class StateAlgo: public IStateAlgo{
@@ -10,7 +10,10 @@ class StateAlgo: public IStateAlgo{
     bool paper;
     public:
     StateAlgo(ISystemComponentFactory& _factory, std::string symbolToTrade, bool _paper):factory(_factory),symbol(symbolToTrade), paper(_paper){
-        swapState(new BuyState(factory, this, symbol, paper)); // init state
+        sell = new SellState(factory, this, symbol, paper);
+        buy = new BuyState(factory, this, symbol, paper);
+        swapState(buy);
+        // init states
         IDataStream* stream = factory.getStream();
         // dangerous to let this escape in constructor but since the base classes are already constructed this is fine
         stream->subscribe(this);
