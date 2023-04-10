@@ -22,7 +22,7 @@ class SellState: public IState{
         if(nextPrice - .5 < lastPrice){
             if(dir == Direction::STEADY){ // wasn't moving much but is now on the drop so sell
                 // sell
-                OrderResponse order = factory.getBroker(paper)->placeEquityOrder(symbol,"buy","10","market","day","","");
+                OrderResponse order = factory.getBroker(paper)->placeEquityOrder(symbol,"sell","10","market","day","","");
                 if(order.id != "-1"){
                     // order was accepted
                     parent->swapState(new PendingOrderState(factory,parent,symbol,paper,order.id,parent->buy,parent->sell));
