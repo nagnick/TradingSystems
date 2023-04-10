@@ -150,9 +150,13 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
                     "take_profit",take_profit).set("stop_loss",stop_loss)
         ); 
     };
-    void getOrderByOrderId(string order_id){
+    virtual OrderResponse getOrderByOrderId(string order_id){
         int status = 0;
-        sendRequestAndReturnString(apiSession,"GET", "/v2/orders/"+order_id, Poco::JSON::Object());
+        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject(apiSession,status,"GET", "/v2/orders/"+order_id, Poco::JSON::Object());
+        if(result){
+            return OrderResponse(result->get("id").toString(),result->get("status").toString());
+        }
+        return OrderResponse("-1","ERROR");
     }
     void getOrderByClientOrderId(string client_order_id){
         int status = 0;

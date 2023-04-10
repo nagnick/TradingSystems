@@ -10,6 +10,7 @@ class IBroker{ // classes that inherite this interface are solely for sending tr
     public:
     virtual std::vector<PositionResponse> getAllPositions() = 0; // DONE
     virtual OrderResponse cancelOrderByOrderId(string order_id) = 0; //DONE
+    virtual OrderResponse getOrderByOrderId(string order_id); // DONE
     virtual OrderResponse placeEquityOrder(string symbol, string side, string quantity, string type,
         string duration, string price, string stop)=0;  //DONE
     virtual BalanceResponse getBalance() = 0; // DONE

@@ -167,6 +167,19 @@ class TradierBroker: public IBroker{ //  fix not safe as sending a new response 
         }
         return OrderResponse("-1","ERROR");
     }
+    virtual OrderResponse getOrderByOrderId(string order_id){
+        int status = 0;
+        Poco::URI uri;
+        uri.setPath("/v1/accounts/"+ accountId +"/orders/" + order_id );
+        uri.addQueryParameter("includeTags","true");
+        Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject(status, "POST", uri.getPathAndQuery());///v1/accounts/{account_id}/orders/{id}
+        if(result){
+            Poco::Dynamic::Var test = result->get("order");
+            Poco::JSON::Object::Ptr subObject = test.extract<Poco::JSON::Object::Ptr>();
+            return OrderResponse(subObject->get("id").toString(), subObject->get("status").toString());
+        }
+        return OrderResponse("-1","ERROR");
+    }
     virtual OrderResponse placeEquityOrder(string symbol, string side, string quantity, string type,
         string duration, string price, string stop, string tag){
             // everything from price on is optional
