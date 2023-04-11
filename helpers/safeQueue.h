@@ -12,8 +12,10 @@ public:
 
     // Add an element to the queue.
     void enqueue(T t){
-        std::lock_guard<std::mutex> lock(m);
+        {
+        std::scoped_lock lock(m);
         q.push(t);
+        }
         c.notify_one();
     }
     // Get the "front"-element.
