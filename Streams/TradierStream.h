@@ -72,6 +72,8 @@ class TradierStream: public IDataStream, public IAsync{
     }
     public:
     virtual void connect(){ // do only once to start up websocket
+        delete session; // incase called by failed session
+        delete websocket;
         session = new Poco::Net::HTTPSClientSession(url, port);
         Poco::Net::HTTPResponse response;
         Poco::Net::HTTPRequest request("GET", urlPath);
@@ -100,6 +102,14 @@ class TradierStream: public IDataStream, public IAsync{
         int flags =  0;
         while(running){// a spinning polling loop
             int length = websocket->receiveFrame((void*)buffer,10000,flags);
+            if ((flags & Poco::Net::WebSocket::FRAME_OP_BITMASK) == Poco::Net::WebSocket::FRAME_OP_PING) { // reply to any pings
+                websocket->sendFrame(buffer, 10000, Poco::Net::WebSocket::FRAME_OP_PONG);
+            }
+            if(length == 0 && flags == 0){ // reopen in event of closed connection
+                //std::cout << "CONNECTION CLOSSED!!!!!" << std::endl;
+                connect();
+                sendRequest();
+            }
             if (length > 0){ // skip for empty frames
                 buffer[length] = '\0'; // add nullterminator to end of string to prevent grabage at end
             //std::cout << "whole chunk:"<<buffer << "\nParts:" <<  std::endl;
@@ -183,5 +193,7 @@ class TradierStream: public IDataStream, public IAsync{
             }
         }  
     };
-    virtual ~TradierStream(){};
+    virtual ~TradierStream(){
+        stop();
+    };
 };

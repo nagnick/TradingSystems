@@ -73,6 +73,8 @@ class AlpacaStream : public IDataStream, public IAsync {
     };
     public:
     virtual void connect(){ // do only once to start up websocket
+        delete session; // incase called by failed session
+        delete websocket;
         session = new Poco::Net::HTTPSClientSession(url, port);
         Poco::Net::HTTPResponse response;
         Poco::Net::HTTPRequest request("GET", urlPath);
@@ -85,6 +87,7 @@ class AlpacaStream : public IDataStream, public IAsync {
         Poco::Net::HTTPRequest request("GET", urlPath);
         request.add("APCA-API-KEY-ID",apiKey);
         request.add("APCA-API-SECRET-KEY",apiSecretKey);
+        //request.setKeepAlive(true);
         //request.add("Accept-Encoding","gzip,deflate"); // i guess I don't need to deflate it
         std::string sym;
         for (auto &&i : symbols){
@@ -132,6 +135,14 @@ class AlpacaStream : public IDataStream, public IAsync {
         int flags =  0;
         while(running){
             int length = websocket->receiveFrame((void*)buffer,10000,flags);
+            if ((flags & Poco::Net::WebSocket::FRAME_OP_BITMASK) == Poco::Net::WebSocket::FRAME_OP_PING) { // reply to any pings
+                websocket->sendFrame(buffer, 10000, Poco::Net::WebSocket::FRAME_OP_PONG);
+            }
+            if(length == 0 && flags == 0){ // reopen in event of closed connection
+                //std::cout << "CONNECTION CLOSSED!!!!!" << std::endl;
+                connect();
+                sendRequest();
+            }
             if (length > 0){ // skip for empty frames
                 buffer[length] = '\0'; // add nullterminator to end of string to prevent grabage at end
                 //std::istringstream s1(buffer);
@@ -182,5 +193,7 @@ class AlpacaStream : public IDataStream, public IAsync {
             }
         }
     };
-    ~AlpacaStream(){}
+    ~AlpacaStream(){
+        stop();
+    }
 };
