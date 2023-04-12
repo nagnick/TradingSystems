@@ -17,7 +17,7 @@ class PrintSubscriber: public IDataStreamSubscriber{
     }
     virtual void onData(std::shared_ptr<QuoteData> quote){
         std::cout << " Quote ";
-        std::cout << quote->symbol << quote->bidPrice << quote->bidSize << quote->bidExchange << quote->bidTime << std::endl;
+        std::cout << quote->symbol << quote->bidPrice << quote->bidSize << quote->bidExchange << quote->bidTime << "\n";
         std::cout << quote->askPrice << quote->askSize << quote->askExchange << quote->askTime <<std::endl;
     }
 };

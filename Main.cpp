@@ -59,11 +59,12 @@ int main(){
     IDataStream* pipeA = aFactory.getStream();
     //SimpleAlgo strat(brokerA, *pipeA);
     // std::string sessionId = brokerT.getWebsocketSessionId();
-    IDataStream* pipeT = tFactory.getStream();
+    //IDataStream* pipeT = tFactory.getStream();
     StateAlgo states(aFactory,"SPY",true); // during construction will subscribe to stream from factory passed in  true == paper trading 
-    pipeA->subscribe(&sub);
-    pipeA->subscribeToDataStream("SPY",&sub);
+    //pipeA->subscribe(&sub);
+    //pipeA->subscribeToDataStream("SPY",&sub);
     while(run){ // keep main thread alive until killed
+    sleep(600);
     }
     std::cout << "killed threads" << std::endl;
     return 0;

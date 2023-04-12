@@ -19,7 +19,7 @@ class BuyState: public IState{
         if(lastPrice == 0){
             lastPrice = nextPrice;
         }
-        if(nextPrice - .5 > lastPrice){
+        if(nextPrice - .1 > lastPrice){
             if(dir == Direction::STEADY){ // wasn't moving much but is now on the rise so buy
                 // buy
                 OrderResponse order = factory.getBroker(paper)->placeEquityOrder(symbol,"buy","10","market","day","","");
@@ -31,7 +31,7 @@ class BuyState: public IState{
             }
             dir = Direction::UP;
         }
-        else if( nextPrice - .5 < lastPrice){
+        else if( nextPrice - .1 < lastPrice){
             dir = Direction::DOWN;
         }
         else{

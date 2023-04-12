@@ -16,14 +16,14 @@ class PendingOrderState: public IState{
     IState* nextState = nullptr;
     IState* previousState = nullptr;
     void completedRounds(){
-        if(rounds > 10){
+        if(rounds > 20){
             IBroker* broker = factory.getBroker(paper);
             OrderResponse res = broker->getOrderByOrderId(orderId);
             if(res.status == "filled"){
                 parent->swapState(nextState);
             }
             else if( res.status == "partially_filled"){
-                if(!second){// go for a second 10 rounds
+                if(!second){// go for a second 20 rounds
                     second = true;
                     rounds = 0;
                 }
