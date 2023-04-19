@@ -5,8 +5,9 @@
 #include "Helpers/JSONFileParser.h"
 #include "TradingAlgos/SimpleAlgo.h"
 #include "TradingAlgos/StateAlgo.h"
-
-#include <csignal>
+#include "TradingAlgos/IChainAlgo.h"
+#include <stdlib.h>
+#include <signal.h>
 #include <iostream>
 
 std::atomic_bool run = true;
@@ -17,7 +18,7 @@ void signalHandler(int i ){
     // clean up anything upon shutdown
 }
 int main(){
-    std::signal(SIGINT, signalHandler);
+    signal(SIGINT, signalHandler);
     TradierSystemComponentFactory tFactory;
     AlpacaSystemComponentFactory aFactory;
     //JSONFileParser file("/mnt/c/Users/nicol/Desktop/TradingSystems/broker.cfg");
@@ -60,9 +61,12 @@ int main(){
     //SimpleAlgo strat(brokerA, *pipeA);
     // std::string sessionId = brokerT.getWebsocketSessionId();
     //IDataStream* pipeT = tFactory.getStream();
+    IChainAlgo front;
     StateAlgo states(aFactory,"SPY",true); // during construction will subscribe to stream from factory passed in  true == paper trading 
-    //pipeA->subscribe(&sub);
-    //pipeA->subscribeToDataStream("SPY",&sub);
+    //states.subscribeToStream();
+    front.swapNextInChain(&states);
+    pipeA->subscribe(&front);
+    pipeA->subscribeToDataStream("SPY",&front);
     while(run){ // keep main thread alive until killed
     sleep(600);
     }
