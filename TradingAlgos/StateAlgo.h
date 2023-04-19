@@ -27,12 +27,17 @@ class StateAlgo: public IStateAlgo{ //vector based state holder
         swapState(buy);
         currentState = 0;
 
-        IDataStream* stream = factory.getStream();
+        //IDataStream* stream = factory.getStream();
         // dangerous to let this escape in constructor but since the base classes are already constructed this is fine
-        stream->subscribe(this);
-        stream->subscribeToDataStream(symbol,this);
+        //stream->subscribe(this);
+        //stream->subscribeToDataStream(symbol,this);
         start(); // start at very end to ensure the proper real methods(non abstract) are called by sub thread
     };
+    void subscribeToStream(){ // call this if algo is stand alone and must subscribe itself
+        IDataStream* stream = factory.getStream();
+        stream->subscribe(this);
+        stream->subscribeToDataStream(symbol,this);
+    }
     void swapToNextState(){
         currentState++;
         if(currentState >= states.size()){
