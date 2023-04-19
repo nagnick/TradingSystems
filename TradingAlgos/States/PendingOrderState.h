@@ -13,14 +13,12 @@ class PendingOrderState: public IState{
     bool paper;
     int rounds = 0;
     bool second = false;
-    IState* nextState = nullptr;
-    IState* previousState = nullptr;
     void completedRounds(){
         if(rounds > 20){
             IBroker* broker = factory.getBroker(paper);
             OrderResponse res = broker->getOrderByOrderId(orderId);
             if(res.status == "filled"){
-                parent->swapState(nextState);
+                parent->swapToNextState();
             }
             else if( res.status == "partially_filled"){
                 if(!second){// go for a second 20 rounds
@@ -30,23 +28,26 @@ class PendingOrderState: public IState{
                 else{ // something is wrong order is not getting filled
                     res = broker->cancelOrderByOrderId(orderId);
                     if(res.status == "ok"){ // restart in previous state
-                        parent->swapState(previousState);
+                        parent->swapToLastState();
                     }
                 }
             }
             else{ // order has not yet been filled something went wrong...
                 res = broker->cancelOrderByOrderId(orderId);
                 if(res.status == "ok"){ // restart in previous state
-                    parent->swapState(previousState);
+                    parent->swapToLastState();
                 }
             }
         }
     }
     public:
-    PendingOrderState(ISystemComponentFactory& _factory, IStateAlgo* _parent, std::string _symbol, bool _paper, std::string _orderId, IState* _nextState, IState* _previousState):factory(_factory),
-        parent(_parent), symbol(_symbol), paper(_paper), orderId(_orderId), nextState(_nextState), previousState(_previousState){
+    PendingOrderState(ISystemComponentFactory& _factory, IStateAlgo* _parent, std::string _symbol, bool _paper):factory(_factory),
+        parent(_parent), symbol(_symbol), paper(_paper){
 
     };
+    void setOrderIdToWatch(std::string _orderId){
+        orderId = _orderId;
+    }
     virtual void onData(std::shared_ptr<IStreamData> data){ // defualt case
         rounds++;
         completedRounds();
@@ -68,4 +69,7 @@ class PendingOrderState: public IState{
     virtual ~PendingOrderState(){
 
     };
+    virtual void init(){ // called when swapped to 
+        setOrderIdToWatch(parent->getOrderId());
+    }
 };

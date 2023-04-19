@@ -58,7 +58,7 @@ class BuyState: public IState{
         calculate(std::stod(quote->askPrice));
     }
     virtual void init(){ // called when swapped to 
-
+        dir = Direction::STEADY;
     }
     virtual ~BuyState(){
 
