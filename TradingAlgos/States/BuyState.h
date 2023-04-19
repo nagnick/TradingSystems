@@ -25,7 +25,8 @@ class BuyState: public IState{
                 OrderResponse order = factory.getBroker(paper)->placeEquityOrder(symbol,"buy","10","market","day","","");
                 if(order.id != "-1"){
                     // order was accepted
-                    parent->swapState(new PendingOrderState(factory,parent,symbol,paper,order.id,parent->sell,parent->buy));
+                    parent->setOrderId(order.id);
+                    parent->swapToNextState();
                 }
                 // change state to pending order...
             }
@@ -55,6 +56,9 @@ class BuyState: public IState{
     }
     virtual void onData(std::shared_ptr<QuoteData> quote){
         calculate(std::stod(quote->askPrice));
+    }
+    virtual void init(){ // called when swapped to 
+
     }
     virtual ~BuyState(){
 

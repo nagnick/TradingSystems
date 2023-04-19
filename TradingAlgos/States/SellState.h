@@ -4,7 +4,6 @@
 #include "TradingAlgos/StateAlgo.h"
 #include "Factories/ISystemComponentFactory.h"
 #include "TradingAlgos/IStateAlgo.h"
-#include "PendingOrderState.h"
 
 #include <string>
 class SellState: public IState{
@@ -25,7 +24,8 @@ class SellState: public IState{
                 OrderResponse order = factory.getBroker(paper)->placeEquityOrder(symbol,"sell","10","market","day","","");
                 if(order.id != "-1"){
                     // order was accepted
-                    parent->swapState(new PendingOrderState(factory,parent,symbol,paper,order.id,parent->buy,parent->sell));
+                    parent->setOrderId(order.id);
+                    parent->swapToNextState();
                 }
                 // change state to pending order...
             }
@@ -55,6 +55,9 @@ class SellState: public IState{
     }
     virtual void onData(std::shared_ptr<QuoteData> quote){
         calculate(std::stod(quote->askPrice));
+    }
+    virtual void init(){ // called when swapped to 
+
     }
     virtual ~SellState(){
 
