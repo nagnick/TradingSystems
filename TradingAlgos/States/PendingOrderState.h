@@ -17,10 +17,11 @@ class PendingOrderState: public IState{
         if(rounds > 20){
             IBroker* broker = factory.getBroker(paper);
             OrderResponse res = broker->getOrderByOrderId(orderId);
+            std::cout << res.status << std::endl;
             if(res.status == "filled"){
                 parent->swapToNextState();
             }
-            else if( res.status == "partially_filled"){
+            else if(res.status == "partially_filled" || res.status == "new"){
                 if(!second){// go for a second 20 rounds
                     second = true;
                     rounds = 0;
@@ -70,6 +71,8 @@ class PendingOrderState: public IState{
 
     };
     virtual void init(){ // called when swapped to 
+        rounds = 0;
+        second = false;
         setOrderIdToWatch(parent->getOrderId());
     }
 };
