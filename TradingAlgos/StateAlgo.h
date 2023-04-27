@@ -13,6 +13,7 @@ class StateAlgo: public IStateAlgo{ //vector based state holder
     int currentState;
     std::vector<IState*> states;
     std::string orderId;
+    double lastPrice;
     public:
     StateAlgo(ISystemComponentFactory& _factory, std::string symbolToTrade, bool _paper):factory(_factory),symbol(symbolToTrade), paper(_paper){
         IState* buy = new BuyState(factory, this, symbol, paper);
@@ -26,7 +27,9 @@ class StateAlgo: public IStateAlgo{ //vector based state holder
         // init current/start state
         swapState(buy);
         currentState = 0;
-
+        //set last price var
+        lastPrice = std::stod(factory.getBroker(paper)->getDailyHistoricalBars(symbolToTrade,"","").at(0).open);
+        std::cout << "open price: " << lastPrice << std::endl;
         //IDataStream* stream = factory.getStream();
         // dangerous to let this escape in constructor but since the base classes are already constructed this is fine
         //stream->subscribe(this);
@@ -60,5 +63,11 @@ class StateAlgo: public IStateAlgo{ //vector based state holder
     }
     std::string getOrderId(){
         return orderId;
+    }
+    void setLastPrice(double _lastPrice){ // update whenever a new order is placed
+        lastPrice = _lastPrice;
+    }
+    double getLastPrice(){
+        return lastPrice;
     }
 };

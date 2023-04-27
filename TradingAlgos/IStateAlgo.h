@@ -30,4 +30,6 @@ class IStateAlgo: public QueuedStreamSubscriber{ // basic State Holder
     };
     virtual void setOrderId(std::string _orderId) = 0;
     virtual std::string getOrderId() = 0;
+    virtual void setLastPrice(double _lastPrice) = 0;
+    virtual double getLastPrice() = 0;
 };
