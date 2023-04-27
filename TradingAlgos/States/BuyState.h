@@ -11,21 +11,19 @@ class BuyState: public IState{
     IStateAlgo* parent;
     ISystemComponentFactory& factory;
     std::string symbol;
-    enum class Direction{UP = 1, STEADY = 0,DOWN = -1};
+    enum class Direction{UP = 1, DOWN = 0};
     Direction dir;
     double lastPrice;
     bool paper;
     void calculate(double nextPrice){
-        if(lastPrice == 0){
-            lastPrice = nextPrice;
-        }
         if(nextPrice - .1 > lastPrice){
-            if(dir == Direction::STEADY){ // wasn't moving much but is now on the rise so buy
+            if(dir == Direction::DOWN){ // wasn't moving much but is now on the rise so buy
                 // buy
                 OrderResponse order = factory.getBroker(paper)->placeEquityOrder(symbol,"buy","10","market","day","","");
                 if(order.id != "-1"){
                     // order was accepted
                     parent->setOrderId(order.id);
+                    parent->setLastPrice(nextPrice);
                     parent->swapToNextState();
                 }
                 // change state to pending order...
@@ -35,14 +33,12 @@ class BuyState: public IState{
         else if( nextPrice - .1 < lastPrice){
             dir = Direction::DOWN;
         }
-        else{
-            dir = Direction::STEADY;
-        }
+        // else dir unchanged?
     }
     public:
     BuyState(ISystemComponentFactory& _factory, IStateAlgo* _parent, std::string _symbol, bool _paper):factory(_factory), parent(_parent), symbol(_symbol), paper(_paper){
-        lastPrice = 0;
-        dir = Direction::STEADY;
+        lastPrice = parent->getLastPrice();
+        dir = Direction::UP;
     };
     virtual void onData(std::shared_ptr<IStreamData> data){ // defualt case
 
@@ -58,7 +54,8 @@ class BuyState: public IState{
         calculate(std::stod(quote->askPrice));
     }
     virtual void init(){ // called when swapped to 
-        dir = Direction::STEADY;
+        lastPrice = parent->getLastPrice();
+        dir = Direction::UP;
     }
     virtual ~BuyState(){
 

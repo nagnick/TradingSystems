@@ -12,30 +12,31 @@ class PendingOrderState: public IState{
     std::string symbol, orderId;
     bool paper;
     int rounds = 0;
-    bool second = false;
+    double lastPrice;
     void completedRounds(){
         if(rounds > 20){
             IBroker* broker = factory.getBroker(paper);
             OrderResponse res = broker->getOrderByOrderId(orderId);
-            std::cout << res.status << std::endl;
+            std::cout << res.status;
             if(res.status == "filled"){
+                parent->setLastPrice(lastPrice);
                 parent->swapToNextState();
             }
             else if(res.status == "partially_filled" || res.status == "new"){
-                if(!second){// go for a second 20 rounds
-                    second = true;
-                    rounds = 0;
-                }
-                else{ // something is wrong order is not getting filled
-                    res = broker->cancelOrderByOrderId(orderId);
-                    if(res.status == "ok"){ // restart in previous state
-                        parent->swapToLastState();
-                    }
-                }
+                rounds= 0;
+                // else{ // something is wrong order is not getting filled
+                //     res = broker->cancelOrderByOrderId(orderId);
+                //      std::cout << res.status << " OrderID: " << orderId << std::endl;
+                //     if(res.status == "ok"){ // restart in previous state
+                //         parent->swapToLastState();
+                //     }
+                // }
+                return;
             }
             else{ // order has not yet been filled something went wrong...
                 res = broker->cancelOrderByOrderId(orderId);
                 if(res.status == "ok"){ // restart in previous state
+                    parent->setLastPrice(lastPrice);
                     parent->swapToLastState();
                 }
             }
@@ -44,7 +45,7 @@ class PendingOrderState: public IState{
     public:
     PendingOrderState(ISystemComponentFactory& _factory, IStateAlgo* _parent, std::string _symbol, bool _paper):factory(_factory),
         parent(_parent), symbol(_symbol), paper(_paper){
-
+            lastPrice = parent->getLastPrice();
     };
     void setOrderIdToWatch(std::string _orderId){
         orderId = _orderId;
@@ -65,6 +66,7 @@ class PendingOrderState: public IState{
     }
     virtual void onData(std::shared_ptr<QuoteData> quote){
         rounds++;
+        lastPrice = std::stod(quote->askPrice);
         completedRounds();
     }
     virtual ~PendingOrderState(){
@@ -72,7 +74,7 @@ class PendingOrderState: public IState{
     };
     virtual void init(){ // called when swapped to 
         rounds = 0;
-        second = false;
+        lastPrice = parent->getLastPrice();
         setOrderIdToWatch(parent->getOrderId());
     }
 };
