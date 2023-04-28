@@ -25,12 +25,14 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
         port = 443;
         apiSession = new Poco::Net::HTTPSClientSession(url , port);// use for placing orders and getting account info
         dataSession = new Poco::Net::HTTPSClientSession(dataURL, port);// use for requesting any form of market data
-        apiSession->setKeepAlive(true);
-        dataSession->setKeepAlive(true);
+        //apiSession->setKeepAlive(true);
+        //dataSession->setKeepAlive(true);
     };
     std::string sendRequestAndReturnString(Poco::Net::HTTPSClientSession* session, std::string method, std::string urlPath, Poco::JSON::Object json){ // for debug/testing
         Poco::Net::HTTPRequest request(method, urlPath);
-        request.setKeepAlive(true);
+        //request.setKeepAlive(true);
+        session->setTimeout(Poco::Timespan(100, 0));
+        session->setReceiveTimeout(Poco::Timespan(100, 0)); // default is one minute
         std::stringstream ss;
         json.stringify(ss);
         request.setContentLength(ss.str().size());
@@ -53,7 +55,9 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
     };
     Poco::JSON::Object::Ptr sendRequestAndReturnJSONObject(Poco::Net::HTTPSClientSession* session, int& status, string method, string urlPath, Poco::JSON::Object json){ // final version
         Poco::Net::HTTPRequest request(method, urlPath);
-        request.setKeepAlive(true);
+        //request.setKeepAlive(true);
+        session->setTimeout(Poco::Timespan(100, 0));
+        session->setReceiveTimeout(Poco::Timespan(100, 0));
         std::stringstream ss;
         json.stringify(ss);
         request.setContentLength(ss.str().size());
@@ -80,7 +84,9 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
     };
     Poco::JSON::Array::Ptr sendRequestAndReturnJSONArray(Poco::Net::HTTPSClientSession* session, int& status, string method, string urlPath, Poco::JSON::Object json){ // final version
         Poco::Net::HTTPRequest request(method, urlPath);
-        request.setKeepAlive(true);
+        //request.setKeepAlive(true);
+        session->setTimeout(Poco::Timespan(100, 0));
+        session->setReceiveTimeout(Poco::Timespan(100, 0)); // default is one minute
         std::stringstream ss;
         json.stringify(ss);
         request.setContentLength(ss.str().size());
