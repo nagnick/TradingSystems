@@ -95,6 +95,7 @@ class SimpleAlgo: public IDataStreamSubscriber {
                 break;
             }
         }
+        lastPrice = nextPrice;
     }
     ~SimpleAlgo(){};
 };
