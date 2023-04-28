@@ -17,20 +17,12 @@ class PendingOrderState: public IState{
         if(rounds > 20){
             IBroker* broker = factory.getBroker(paper);
             OrderResponse res = broker->getOrderByOrderId(orderId);
-            //std::cout << res.status;
             if(res.status == "filled"){
                 parent->setLastPrice(lastPrice);
                 parent->swapToNextState();
             }
             else if(res.status == "partially_filled" || res.status == "new"){
                 rounds= 0;
-                // else{ // something is wrong order is not getting filled
-                //     res = broker->cancelOrderByOrderId(orderId);
-                //      std::cout << res.status << " OrderID: " << orderId << std::endl;
-                //     if(res.status == "ok"){ // restart in previous state
-                //         parent->swapToLastState();
-                //     }
-                // }
                 return;
             }
             else{ // order has not yet been filled something went wrong...

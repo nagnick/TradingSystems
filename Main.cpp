@@ -21,16 +21,16 @@ int main(){
     signal(SIGINT, signalHandler);
     TradierSystemComponentFactory tFactory;
     AlpacaSystemComponentFactory aFactory;
-    bool paperTrading = true;
+    bool paperTrading = true; //true == paper trading 
     IBroker* brokerT = tFactory.getBroker(paperTrading);
     IBroker* brokerA = aFactory.getBroker(paperTrading);
     
     PrintSubscriber sub;
     IDataStream* pipeA = aFactory.getStream();
-    //SimpleAlgo strat(brokerA, *pipeA);
+    SimpleAlgo strat(aFactory,"SPY",paperTrading);
     IChainAlgo front;
-    StateAlgo states(aFactory,"SPY",true); // during construction will subscribe to stream from factory passed in  true == paper trading 
-    //states.subscribeToStream();
+    StateAlgo states(aFactory,"SPY",paperTrading);
+    //states.subscribeToStream(); // if stand alone without chain
     front.swapNextInChain(&states);
     pipeA->subscribe(&front);
     pipeA->subscribeToDataStream("SPY",&front);
