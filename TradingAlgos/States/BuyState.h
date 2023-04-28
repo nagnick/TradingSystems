@@ -33,6 +33,7 @@ class BuyState: public IState{
         else if( nextPrice - .1 < lastPrice){
             dir = Direction::DOWN;
         }
+        lastPrice = nextPrice;
         // else dir unchanged?
     }
     public:

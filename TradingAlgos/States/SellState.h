@@ -32,6 +32,7 @@ class SellState: public IState{
         else if( nextPrice - .1 > lastPrice){
             dir = Direction::UP;
         }
+        lastPrice = nextPrice;
     }
     public:
     SellState(ISystemComponentFactory& _factory, IStateAlgo* _parent, std::string _symbol, bool _paper):factory(_factory), parent(_parent), symbol(_symbol), paper(_paper){
