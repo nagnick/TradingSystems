@@ -17,7 +17,7 @@ class PendingOrderState: public IState{
         if(rounds > 20){
             IBroker* broker = factory.getBroker(paper);
             OrderResponse res = broker->getOrderByOrderId(orderId);
-            std::cout << res.status;
+            //std::cout << res.status;
             if(res.status == "filled"){
                 parent->setLastPrice(lastPrice);
                 parent->swapToNextState();
