@@ -1,9 +1,7 @@
 #pragma once
 
 #include "IState.h"
-#include "TradingAlgos/StateAlgo.h"
 #include "Factories/ISystemComponentFactory.h"
-#include "PendingOrderState.h"
 #include "TradingAlgos/IStateAlgo.h"
 
 #include <string>

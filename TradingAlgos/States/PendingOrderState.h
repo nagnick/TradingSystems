@@ -1,7 +1,6 @@
 #pragma once
 #include "Brokers/BrokerResponse.h"
 #include "IState.h"
-#include "TradingAlgos/StateAlgo.h"
 #include "Factories/ISystemComponentFactory.h"
 #include "TradingAlgos/IStateAlgo.h"
 
