@@ -27,7 +27,7 @@ int main(){
     
     PrintSubscriber sub;
     IDataStream* pipeA = aFactory.getStream();
-    SimpleAlgo strat(aFactory,"SPY",paperTrading);
+    //SimpleAlgo strat(aFactory,"SPY",paperTrading);
     IChainAlgo front;
     StateAlgo states(aFactory,"SPY",paperTrading);
     //states.subscribeToStream(); // if stand alone without chain

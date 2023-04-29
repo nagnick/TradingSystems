@@ -2,6 +2,7 @@
 #include "Factories/ISystemComponentFactory.h"
 #include "States/BuyState.h"
 #include "States/SellState.h"
+#include "States/TrailingStopSellState.h"
 #include "States/PendingOrderState.h"
 #include <string>
 #include <vector>
@@ -17,7 +18,8 @@ class StateAlgo: public IStateAlgo{ //vector based state holder
     public:
     StateAlgo(ISystemComponentFactory& _factory, std::string symbolToTrade, bool _paper):factory(_factory),symbol(symbolToTrade), paper(_paper){
         IState* buy = new BuyState(factory, this, symbol, paper);
-        IState* sell = new SellState(factory, this, symbol, paper);
+        IState* sell = new TrailingStopState(factory, this, symbol, paper, false, 1.00); // does dollar drop check
+        //new SellState(factory, this, symbol, paper); old replaced by trailing stop loss
         IState* pending = new PendingOrderState(factory,this,symbol,paper);
         // init state cycle order
         states.push_back(buy);
