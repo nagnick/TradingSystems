@@ -3,7 +3,7 @@
 #include "Factories/ISystemComponentFactory.h"
 #include "TradingAlgos/IStateAlgo.h"
 
-class TrailingStopState: public IState{ // my own implementation of trailing stops
+class TrailingStopState: public IState{ // my own implementation of trailing stops uses market orders
     IStateAlgo* parent;
     ISystemComponentFactory& factory;
     std::string symbol;

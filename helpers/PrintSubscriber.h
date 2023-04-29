@@ -1,6 +1,6 @@
 #pragma once
-#include "IDataStreamSubscriber.h"
-#include "StreamData.h"
+#include "Streams/IDataStreamSubscriber.h"
+#include "Streams/StreamData.h"
 class PrintSubscriber: public IDataStreamSubscriber{
     public:
     PrintSubscriber(){};

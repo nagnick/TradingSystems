@@ -17,6 +17,7 @@ class StateAlgo: public IStateAlgo{ //vector based state holder
     double lastPrice;
     public:
     StateAlgo(ISystemComponentFactory& _factory, std::string symbolToTrade, bool _paper):factory(_factory),symbol(symbolToTrade), paper(_paper){
+        // if this concrete class constructing was moved out of this class the state hierarcy can be collapsed 
         IState* buy = new BuyState(factory, this, symbol, paper);
         IState* sell = new TrailingStopState(factory, this, symbol, paper, false, 1.00); // does dollar drop check
         //new SellState(factory, this, symbol, paper); old replaced by trailing stop loss
