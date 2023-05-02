@@ -25,15 +25,24 @@ int main(){
     IBroker* brokerT = tFactory.getBroker(paperTrading);
     IBroker* brokerA = aFactory.getBroker(paperTrading);
     
-    PrintSubscriber sub;
-    IDataStream* pipeA = aFactory.getStream();
-    //SimpleAlgo strat(aFactory,"SPY",paperTrading);
-    IChainAlgo front;
-    StateAlgo states(aFactory,"SPY",paperTrading);
-    //states.subscribeToStream(); // if stand alone without chain
-    front.swapNextInChain(&states);
-    pipeA->subscribe(&front);
-    pipeA->subscribeToDataStream("SPY",&front);
+    // PrintSubscriber sub;
+    // IDataStream* pipeA = aFactory.getStream();
+    // //SimpleAlgo strat(aFactory,"SPY",paperTrading);
+    // IChainAlgo front;
+    // StateAlgo states(aFactory,"SPY",paperTrading);
+    // //states.subscribeToStream(); // if stand alone without chain
+    // front.swapNextInChain(&states);
+    // pipeA->subscribe(&front);
+    // pipeA->subscribeToDataStream("SPY",&front);
+    //test crypto
+    PrintSubscriber print;
+    IDataStream* pipeA = aFactory.getCryptoStream();
+    StateAlgo states(aFactory,"BTC/USD",paperTrading);
+    pipeA->subscribe(&print);
+    pipeA->subscribeToDataStream("BTC/USD",&print);
+    //pipeA->subscribe(&states);
+    //pipeA->subscribeToDataStream("BTC/USD",&states);
+
     while(run){ // keep main thread alive until killed
     sleep(600);
     }
