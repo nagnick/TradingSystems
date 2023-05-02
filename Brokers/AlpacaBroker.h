@@ -1,6 +1,8 @@
 #pragma once
 #include "Helpers/JSONFileParser.h"
 #include "IBroker.h"
+#include "ICryptoBroker.h"
+
 
 #include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
@@ -11,7 +13,7 @@
 
 #include <string>
 using std::string;
-class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
+class AlpacaBroker: public IBroker, public ICryptoBroker{ // can trade stocks and crypto. no options
     Poco::Net::HTTPSClientSession* apiSession;
     Poco::Net::HTTPSClientSession* dataSession; // api and data api have dirrerent urls
     std::string url,dataURL, key, secretKey;
@@ -135,6 +137,25 @@ class AlpacaBroker: public IBroker{ // can trade stocks and crypto. no options
             }
             if(stop != "NULL" && stop != ""){
                 obj.set("stop_price",stop);
+            }
+            //set("trail_percent","NULL").set("trail_price","NULL");  might have to add these fields later for more complex orders
+            Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject(apiSession,status,"POST", "/v2/orders",obj);
+        //std::cout << result->get("id").toString() << std::endl;
+            if(result){
+                return OrderResponse(result->get("id").toString(),result->get("status").toString());
+            }
+            return OrderResponse("-1","ERROR");
+    }
+    virtual OrderResponse placeCryptoOrder(string symbol, string side, string quantity, string type,
+        string duration, string limitPrice, string stopPrice){
+            int status = 0;
+            Poco::JSON::Object obj;
+            obj.set("symbol", symbol).set("qty",quantity).set("side",side).set("type",type).set("time_in_force",duration); // minimum for order to work
+            if(limitPrice != "NULL" && limitPrice != ""){
+                obj.set("limit_price",limitPrice);
+            }
+            if(stopPrice != "NULL" && stopPrice != ""){
+                obj.set("stop_price",stopPrice);
             }
             //set("trail_percent","NULL").set("trail_price","NULL");  might have to add these fields later for more complex orders
             Poco::JSON::Object::Ptr result = sendRequestAndReturnJSONObject(apiSession,status,"POST", "/v2/orders",obj);
