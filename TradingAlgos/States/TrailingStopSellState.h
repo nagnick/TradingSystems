@@ -37,16 +37,19 @@ class TrailingStopState: public IState{ // my own implementation of trailing sto
     public:
     TrailingStopState(ISystemComponentFactory& _factory, IStateAlgo* _parent, std::string _symbol, bool _paper, bool _percentStop, double _stop):factory(_factory),
      parent(_parent), symbol(_symbol), paper(_paper), percentStop(_percentStop), stop(_stop){
+        lastPrice = parent->getLastPrice();
+        highWaterMark = lastPrice;
     };
     virtual ~TrailingStopState(){};
     virtual void init(){
-        highWaterMark = 0;
         lastPrice = parent->getLastPrice();
+        highWaterMark = lastPrice;
     };
     virtual void onData(std::shared_ptr<IStreamData> data){}; // defualt case
     virtual void onData(std::shared_ptr<OtherData> other){};
     virtual void onData(std::shared_ptr<TradeData> trade){};
     virtual void onData(std::shared_ptr<QuoteData> quote){
-        calculate(std::stod(quote->askPrice));
+        //calculate(std::stod(quote->askPrice));// would bid work better when selling?
+        calculate(std::stod(quote->bidPrice));
     };
 };

@@ -43,8 +43,7 @@ class BuyState: public IState{
 
     }
     virtual void onData(std::shared_ptr<OtherData> other){
-        std::cout << " OtherData ";
-        std::cout << other->data << std::endl;
+        
     }
     virtual void onData(std::shared_ptr<TradeData> trade){
 

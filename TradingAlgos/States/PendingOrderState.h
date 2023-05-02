@@ -46,8 +46,6 @@ class PendingOrderState: public IState{
         completedRounds();
     }
     virtual void onData(std::shared_ptr<OtherData> other){
-        std::cout << " OtherData ";
-        std::cout << other->data << std::endl;
         rounds++;
         completedRounds();
     }
