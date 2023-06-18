@@ -139,7 +139,7 @@ class AlpacaStream : public IDataStream, public IAsync {
                 websocket->sendFrame(buffer, 10000, Poco::Net::WebSocket::FRAME_OP_PONG);
             }
             if(length == 0 && flags == 0){ // reopen in event of closed connection
-                //std::cout << "CONNECTION CLOSSED!!!!!" << std::endl;
+                std::cout << "CONNECTION CLOSSED!!!!! Attempting to reconnect." << std::endl;
                 connect();
                 sendRequest();
             }

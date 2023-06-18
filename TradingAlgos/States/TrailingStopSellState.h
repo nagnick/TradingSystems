@@ -49,7 +49,7 @@ class TrailingStopState: public IState{ // my own implementation of trailing sto
     virtual void onData(std::shared_ptr<OtherData> other){};
     virtual void onData(std::shared_ptr<TradeData> trade){};
     virtual void onData(std::shared_ptr<QuoteData> quote){
-        //calculate(std::stod(quote->askPrice));// would bid work better when selling?
-        calculate(std::stod(quote->bidPrice));
+        calculate(std::stod(quote->askPrice));// would bid work better when selling?
+        //calculate(std::stod(quote->bidPrice));
     };
 };
