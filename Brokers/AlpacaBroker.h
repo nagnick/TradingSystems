@@ -77,7 +77,7 @@ class AlpacaBroker: public IBroker, public ICryptoBroker{ // can trade stocks an
             //int length = response.getContentLength();
             std::stringstream buffer;
             buffer << s.rdbuf();
-        //std::cout<< buffer.str() << std::endl;
+    //std::cout<< buffer.str() << std::endl;
             Poco::JSON::Parser parser;
             Poco::Dynamic::Var result = parser.parse(buffer.str());
             return  result.extract<Poco::JSON::Object::Ptr>();
@@ -100,13 +100,13 @@ class AlpacaBroker: public IBroker, public ICryptoBroker{ // can trade stocks an
         //get response
         Poco::Net::HTTPResponse response;
         std::istream& s = session->receiveResponse(response);
-        //std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
+//std::cout << response.getStatus() << " " << response.getReason() << response.getKeepAlive()<< std::endl;
         status = response.getStatus();
         if(status == 200){ // valid responses are 200 contian valis json responses that can be parsed
             int length = response.getContentLength();
             std::stringstream buffer;
             buffer << s.rdbuf();
-        //std::cout<< buffer.str() << std::endl;
+//std::cout<< buffer.str() << std::endl;
             Poco::JSON::Parser parser;
             Poco::Dynamic::Var result = parser.parse(buffer.str());
             return  result.extract<Poco::JSON::Array::Ptr>();
@@ -276,11 +276,13 @@ class AlpacaBroker: public IBroker, public ICryptoBroker{ // can trade stocks an
         Poco::JSON::Object::Ptr ptr = sendRequestAndReturnJSONObject(dataSession,status,"GET", uri.getPathAndQuery(), Poco::JSON::Object());
     //std:: cout << status << std::endl;
         if(ptr){
-            Poco::JSON::Array::Ptr array = ptr->getArray("bars");
-            for(std::size_t i = 0; i < array->size(); i++){
-                ptr = array->getObject(i);
-                std::string timestamp = ptr->get("t");
-                bars.push_back(BarResponse(symbol,ptr->get("o"),ptr->get("c"),ptr->get("l"),ptr->get("h"),ptr->get("v"),timestamp.substr(0,10)));
+            if(!ptr->isNull("bars")){ // error will return with bar == null
+                Poco::JSON::Array::Ptr array = ptr->getArray("bars");
+                for(std::size_t i = 0; i < array->size(); i++){
+                    ptr = array->getObject(i);
+                    std::string timestamp = ptr->get("t");
+                    bars.push_back(BarResponse(symbol,ptr->get("o"),ptr->get("c"),ptr->get("l"),ptr->get("h"),ptr->get("v"),timestamp.substr(0,10)));
+                }
             }
         }
         return bars;

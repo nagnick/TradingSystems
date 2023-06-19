@@ -13,7 +13,7 @@ class StateAlgo: public IStateAlgo{ //vector based state holder
     bool paper;
     int currentState;
     std::vector<IState*> states;
-    std::string orderId;
+    std::string orderId = "NotSetYet";
     double lastPrice;
     public:
     StateAlgo(ISystemComponentFactory& _factory, std::string symbolToTrade, bool _paper):factory(_factory),symbol(symbolToTrade), paper(_paper){
@@ -36,11 +36,15 @@ class StateAlgo: public IStateAlgo{ //vector based state holder
             lastPrice = std::stod(bars.at(0).open);
             std::cout << "open price: " << lastPrice << std::endl;
         }
+        else{
+            std::cout << "States initial price was not set historical bars failed. Danger!!!" << std::endl;
+        }
         //IDataStream* stream = factory.getStream();
         // dangerous to let this escape in constructor but since the base classes are already constructed this is fine
         //stream->subscribe(this);
         //stream->subscribeToDataStream(symbol,this);
         start(); // start at very end to ensure the proper real methods(non abstract) are called by sub thread
+        std::cout << "States algo constructed" << std::endl;
     };
     void subscribeToStream(){ // call this if algo is stand alone and must subscribe itself
         IDataStream* stream = factory.getStream();

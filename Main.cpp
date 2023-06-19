@@ -28,18 +28,23 @@ int main(){
     // PrintSubscriber sub;
     IDataStream* pipeA = aFactory.getStream();
     //SimpleAlgo strat(aFactory,"SPY",paperTrading);
-    IChainAlgo front;
+    //IChainAlgo front;
+    try{
     StateAlgo states(aFactory,"SPY",paperTrading);
-    //states.subscribeToStream(); // if stand alone without chain
-    front.swapNextInChain(&states);
-    pipeA->subscribe(&front);
-    pipeA->subscribeToDataStream("SPY",&front);
+    states.subscribeToStream(); // if stand alone without chain
+    }
+    catch(const Poco::Exception e){
+        std::cout << e.displayText() << e.message() << e.what() << std::endl;
+    }
+    //front.swapNextInChain(&states);
+    //pipeA->subscribe(&states);
+    //pipeA->subscribeToDataStream("SPY",&states);
     //test crypto
-    // PrintSubscriber print;
+     PrintSubscriber print;
     // IDataStream* pipeA = aFactory.getCryptoStream();
     // StateAlgo states(aFactory,"BTC/USD",paperTrading);
-    // pipeA->subscribe(&print);
-    // pipeA->subscribeToDataStream("BTC/USD",&print);
+     pipeA->subscribe(&print);
+     pipeA->subscribeToDataStream("SPY",&print);
     //pipeA->subscribe(&states);
     //pipeA->subscribeToDataStream("BTC/USD",&states);
 
